@@ -1,0 +1,6 @@
+In Terminal (MAC)
+
+python3 -m venv venv
+source venv/bin/activate
+pip3 install pytesseract pillow PyPDF2 python-docx
+python3 dpdp_scanner_v2.py .

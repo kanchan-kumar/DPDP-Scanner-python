@@ -1,0 +1,170 @@
+{
+  "scanner_version": "3.0",
+  "scan_root": "/Users/kanchankumar/Documents/learning/PGP-Cloud",
+  "host": "Apples-MacBook-Pro.local",
+  "started_at": "2026-02-08T14:39:11.043657",
+  "ended_at": "2026-02-08T14:39:11.185046",
+  "total_findings": 20,
+  "findings": [
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "State Bank of India",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "sbi",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "SBI",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "HDFC Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "ICICI Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Axis Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Kotak Mahindra Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Punjab National Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Bank of Baroda",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Canara Bank",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_NAME",
+      "category": "PERSONAL",
+      "value": "Union Bank of India",
+      "confidence": 0.95,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/dpdp_scanner_v2.py",
+      "file_hash": "e146aef8ad74ae03a44b141e5e3d14948510a5af2e9c3eb2519cf2252e96085b"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770560243799",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770560243799",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770560244866",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770560340713",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770560724074",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "1770561455924",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/.idea/workspace.xml",
+      "file_hash": "51c5c12daf1da3890e325c44066fef368ec3afb9fe042e3491cac4dd6d7500e8"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "123456789123",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/aws-essentials/scripts/s3-bucket-util.sh",
+      "file_hash": "3a297af837341a6a4f6ed8489d57d69c3d7674a0846ab5822de38978c35421cd"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "123456789123",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/aws-essentials/scripts/s3-bucket-util.sh",
+      "file_hash": "3a297af837341a6a4f6ed8489d57d69c3d7674a0846ab5822de38978c35421cd"
+    },
+    {
+      "identifier_type": "BANK_ACCOUNT",
+      "category": "SENSITIVE_PERSONAL",
+      "value": "123456789123",
+      "confidence": 0.9,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/aws-essentials/scripts/s3-bucket-util.sh",
+      "file_hash": "3a297af837341a6a4f6ed8489d57d69c3d7674a0846ab5822de38978c35421cd"
+    }
+  ]
+}
