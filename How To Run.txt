@@ -76,3 +76,8 @@ Notes
 - Default logs show progress steps only and do not print detected sensitive values.
 - OCR is disabled by default to avoid runtime dependency on external Tesseract.
 - If `--output` has no extension (for example `/tmp/reports`), it is treated as a directory target.
+- For higher precision tuning:
+  - Use `presidio.entities` to scan only required entity types.
+  - Use `presidio.entity_score_thresholds` to set stricter per-entity confidence.
+  - Use `presidio.chunk_size_chars` and `presidio.spacy_max_length` for large files.
+  - Keep `custom_recognizers.upi_generic_pattern=false` to avoid email-like UPI false positives.

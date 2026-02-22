@@ -2,17 +2,82 @@
 
 from __future__ import annotations
 
+from copy import copy
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer import AnalyzerEngine, RecognizerResult
 
 from .discovery import iter_candidate_files
 from .extractors import extract_text
+from .postprocessing import apply_postprocessing
 from .recognizers import build_analyzer
 from .reporting import build_finding, deduplicate_results
 from .utils import sha256_file, utc_now
+
+
+def _analyze_chunked(
+    analyzer: AnalyzerEngine,
+    text: str,
+    presidio_cfg: Dict[str, Any],
+) -> List[RecognizerResult]:
+    """
+    Analyze text in chunks to avoid spaCy max-length failures on large files.
+    Offsets from each chunk are translated back to the original text positions.
+    """
+    language = presidio_cfg.get("language", "en")
+    entities = presidio_cfg.get("entities") or None
+    score_threshold = float(presidio_cfg.get("score_threshold", 0.35))
+    return_decision_process = bool(presidio_cfg.get("return_decision_process", False))
+    context_words = presidio_cfg.get("context_words") or None
+    allow_list = presidio_cfg.get("allow_list") or None
+    allow_list_match = presidio_cfg.get("allow_list_match", "exact")
+
+    chunk_size = int(presidio_cfg.get("chunk_size_chars", 200000))
+    chunk_overlap = int(presidio_cfg.get("chunk_overlap_chars", 500))
+    if chunk_size <= 0:
+        chunk_size = len(text)
+    chunk_overlap = max(0, min(chunk_overlap, max(0, chunk_size - 1)))
+
+    if len(text) <= chunk_size:
+        return analyzer.analyze(
+            text=text,
+            language=language,
+            entities=entities,
+            score_threshold=score_threshold,
+            return_decision_process=return_decision_process,
+            context=context_words,
+            allow_list=allow_list,
+            allow_list_match=allow_list_match,
+        )
+
+    merged_results: List[RecognizerResult] = []
+    start = 0
+    while start < len(text):
+        end = min(len(text), start + chunk_size)
+        chunk_text = text[start:end]
+        chunk_results = analyzer.analyze(
+            text=chunk_text,
+            language=language,
+            entities=entities,
+            score_threshold=score_threshold,
+            return_decision_process=return_decision_process,
+            context=context_words,
+            allow_list=allow_list,
+            allow_list_match=allow_list_match,
+        )
+        for item in chunk_results:
+            adjusted = copy(item)
+            adjusted.start = int(item.start) + start
+            adjusted.end = int(item.end) + start
+            merged_results.append(adjusted)
+
+        if end >= len(text):
+            break
+        start = end - chunk_overlap
+
+    return merged_results
 
 
 def scan_file(
@@ -34,26 +99,28 @@ def scan_file(
         return [], None
 
     entities = presidio_cfg.get("entities") or None
-    allow_list = presidio_cfg.get("allow_list") or None
-    context_words = presidio_cfg.get("context_words") or None
 
     try:
-        results = analyzer.analyze(
+        results = _analyze_chunked(
+            analyzer=analyzer,
             text=text,
-            language=presidio_cfg.get("language", "en"),
-            entities=entities,
-            score_threshold=float(presidio_cfg.get("score_threshold", 0.35)),
-            return_decision_process=bool(
-                presidio_cfg.get("return_decision_process", False)
-            ),
-            context=context_words,
-            allow_list=allow_list,
-            allow_list_match=presidio_cfg.get("allow_list_match", "exact"),
+            presidio_cfg=presidio_cfg,
         )
     except Exception as exc:
         return [], str(exc)
 
     results = deduplicate_results(results, text)
+    thresholds = presidio_cfg.get("entity_score_thresholds", {}) or {}
+    results = apply_postprocessing(
+        results=results,
+        text=text,
+        entity_thresholds=thresholds,
+    )
+
+    if entities:
+        entity_filter = set(entities)
+        results = [result for result in results if result.entity_type in entity_filter]
+
     include_file_hash = bool(output_cfg.get("include_file_hash", True))
     file_hash = sha256_file(path) if include_file_hash else None
 
@@ -214,4 +281,3 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
         ),
         "files": file_reports,
     }
-

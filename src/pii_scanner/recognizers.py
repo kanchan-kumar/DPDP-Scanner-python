@@ -15,6 +15,7 @@ except ImportError:  # pragma: no cover - optional runtime module
     tldextract = None
 
 from presidio_analyzer import AnalyzerEngine, Pattern, PatternRecognizer, RecognizerRegistry
+from presidio_analyzer import LemmaContextAwareEnhancer
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 
 
@@ -96,8 +97,35 @@ def configure_tldextract_offline() -> None:
     )
 
 
-def build_indian_recognizers(language: str, aadhaar_checksum: bool) -> List[PatternRecognizer]:
+def build_indian_recognizers(
+    language: str,
+    aadhaar_checksum: bool,
+    custom_cfg: Dict[str, Any],
+) -> List[PatternRecognizer]:
     """Create custom pattern recognizers tailored for common India-specific IDs."""
+    upi_domains = custom_cfg.get("upi_handle_domains", []) or []
+    upi_generic_pattern = bool(custom_cfg.get("upi_generic_pattern", False))
+    if upi_domains:
+        upi_domain_group = "|".join(re.escape(domain) for domain in upi_domains)
+    else:
+        upi_domain_group = "upi|ybl|ibl|axl|paytm|okhdfcbank|okicici|oksbi|okaxis"
+
+    upi_patterns = [
+        Pattern(
+            name="upi_strict",
+            regex=rf"\b[a-zA-Z0-9._-]{{2,}}@(?:{upi_domain_group})\b",
+            score=0.7,
+        ),
+    ]
+    if upi_generic_pattern:
+        upi_patterns.append(
+            Pattern(
+                name="upi_generic",
+                regex=r"\b[a-zA-Z0-9._-]{2,}@[a-zA-Z]{2,64}\b",
+                score=0.45,
+            )
+        )
+
     return [
         AadhaarRecognizer(validate_checksum=aadhaar_checksum, language=language),
         PatternRecognizer(
@@ -130,18 +158,7 @@ def build_indian_recognizers(language: str, aadhaar_checksum: bool) -> List[Patt
             supported_entity="IN_UPI_ID",
             name="IN_UPI_RECOGNIZER",
             supported_language=language,
-            patterns=[
-                Pattern(
-                    name="upi_strict",
-                    regex=r"\b[a-zA-Z0-9._-]{2,}@(upi|ybl|ibl|axl|paytm|okhdfcbank|okicici|oksbi|okaxis)\b",
-                    score=0.7,
-                ),
-                Pattern(
-                    name="upi_generic",
-                    regex=r"\b[a-zA-Z0-9._-]{2,}@[a-zA-Z]{2,64}\b",
-                    score=0.45,
-                ),
-            ],
+            patterns=upi_patterns,
             context=["upi", "vpa", "gpay", "phonepe", "paytm", "bhim", "payment"],
         ),
         PatternRecognizer(
@@ -198,6 +215,15 @@ def build_analyzer(config: Dict[str, Any], logger: logging.Logger) -> AnalyzerEn
 
     provider = NlpEngineProvider(nlp_configuration=nlp_configuration)
     nlp_engine = provider.create_engine()
+
+    # Allow large files by raising spaCy guardrail; scan logic still chunks text.
+    spacy_max_length = int(presidio_cfg.get("spacy_max_length", 3000000))
+    if nlp_engine_name == "spacy":
+        try:
+            nlp = nlp_engine.get_nlp(language)
+            nlp.max_length = max(int(nlp.max_length), spacy_max_length)
+        except Exception:
+            pass
     logger.info("STEP_DONE: build_nlp_engine")
 
     logger.info("STEP_START: load_predefined_recognizers")
@@ -211,9 +237,27 @@ def build_analyzer(config: Dict[str, Any], logger: logging.Logger) -> AnalyzerEn
     if custom_cfg.get("enable_indian_identifiers", True):
         logger.info("STEP_START: load_custom_recognizers")
         aadhaar_checksum = custom_cfg.get("aadhaar_checksum_validation", True)
-        for recognizer in build_indian_recognizers(language, aadhaar_checksum):
+        for recognizer in build_indian_recognizers(
+            language=language,
+            aadhaar_checksum=aadhaar_checksum,
+            custom_cfg=custom_cfg,
+        ):
             registry.add_recognizer(recognizer)
         logger.info("STEP_DONE: load_custom_recognizers")
+
+    context_cfg = presidio_cfg.get("context_enhancer", {}) or {}
+    context_enhancer = None
+    if bool(context_cfg.get("enabled", True)):
+        context_enhancer = LemmaContextAwareEnhancer(
+            context_similarity_factor=float(
+                context_cfg.get("context_similarity_factor", 0.35)
+            ),
+            min_score_with_context_similarity=float(
+                context_cfg.get("min_score_with_context_similarity", 0.45)
+            ),
+            context_prefix_count=int(context_cfg.get("context_prefix_count", 8)),
+            context_suffix_count=int(context_cfg.get("context_suffix_count", 2)),
+        )
 
     logger.info("STEP_START: init_analyzer_engine")
     analyzer = AnalyzerEngine(
@@ -221,7 +265,7 @@ def build_analyzer(config: Dict[str, Any], logger: logging.Logger) -> AnalyzerEn
         nlp_engine=nlp_engine,
         supported_languages=supported_languages,
         default_score_threshold=float(presidio_cfg.get("score_threshold", 0.35)),
+        context_aware_enhancer=context_enhancer,
     )
     logger.info("STEP_DONE: init_analyzer_engine")
     return analyzer
-

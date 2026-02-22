@@ -43,8 +43,29 @@
     ],
     "nlp_engine_name": "spacy",
     "model_name": "en_core_web_lg",
-    "entities": [],
+    "entities": [
+      "IN_AADHAAR",
+      "IN_PAN",
+      "IN_IFSC",
+      "IN_UPI_ID",
+      "IN_PASSPORT",
+      "IN_BANK_ACCOUNT",
+      "EMAIL_ADDRESS",
+      "PHONE_NUMBER",
+      "PERSON",
+      "LOCATION",
+      "CREDIT_CARD",
+      "IBAN_CODE",
+      "IP_ADDRESS"
+    ],
     "score_threshold": 0.35,
+    "entity_score_thresholds": {
+      "PERSON": 0.6,
+      "LOCATION": 0.55,
+      "PHONE_NUMBER": 0.55,
+      "EMAIL_ADDRESS": 0.6,
+      "IN_BANK_ACCOUNT": 0.45
+    },
     "return_decision_process": false,
     "allow_list": [],
     "allow_list_match": "exact",
@@ -54,11 +75,33 @@
       "bank",
       "payment",
       "contact"
-    ]
+    ],
+    "spacy_max_length": 3000000,
+    "chunk_size_chars": 200000,
+    "chunk_overlap_chars": 500,
+    "context_enhancer": {
+      "enabled": true,
+      "context_similarity_factor": 0.35,
+      "min_score_with_context_similarity": 0.45,
+      "context_prefix_count": 8,
+      "context_suffix_count": 2
+    }
   },
   "custom_recognizers": {
     "enable_indian_identifiers": true,
-    "aadhaar_checksum_validation": true
+    "aadhaar_checksum_validation": true,
+    "upi_generic_pattern": false,
+    "upi_handle_domains": [
+      "upi",
+      "ybl",
+      "ibl",
+      "axl",
+      "paytm",
+      "okhdfcbank",
+      "okicici",
+      "oksbi",
+      "okaxis"
+    ]
   },
   "output": {
     "path": "pii_output.json",
