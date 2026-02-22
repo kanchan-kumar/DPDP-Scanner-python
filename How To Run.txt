@@ -1,6 +1,78 @@
-In Terminal (MAC)
+DPDP Presidio Scanner - Run Guide
 
-python3 -m venv venv
-source venv/bin/activate
-pip3 install pytesseract pillow PyPDF2 python-docx
-python3 dpdp_scanner_v2.py .
+1) Create and setup ONE virtual environment (.venv)
+# From project root:
+# Prefer Python 3.13 (or 3.12/3.11/3.10). Do NOT use Python 3.14+.
+python3.13 -m venv .venv
+# If python3.13 is not available, use python3.12/python3.11/python3.10.
+
+# Activate (macOS/Linux):
+source .venv/bin/activate
+
+# Activate (Windows PowerShell):
+# .venv\\Scripts\\Activate.ps1
+
+# Verify you are using .venv Python:
+python --version
+which python
+# Expected: Python 3.10, 3.11, 3.12, or 3.13
+
+# Install dependencies inside .venv:
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip check
+python -m spacy download en_core_web_lg
+
+2) Run from source (recommended while developing)
+python main.py --config scanner_config.json
+
+Example: scan a path and write to a JSON file
+python main.py --path /data/input --output /tmp/pii_report.json
+
+Example: pass output as a directory (auto-creates pii_output.json inside)
+python main.py --path /data/input --output /tmp/reports
+# output file becomes: /tmp/reports/pii_output.json
+
+3) Build standalone executable (Python + dependencies bundled)
+python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --zip
+
+Build output (onedir):
+- dist/dpdp-pii-scanner/dpdp-pii-scanner
+- dist/dpdp-pii-scanner/dpdp-scan
+- dist/dpdp-pii-scanner/scanner_config.json
+- dist/dpdp-pii-scanner-<os>-<arch>.zip
+
+4) Run executable on target machine (no Python install needed)
+./dpdp-scan --path /data/input --output /tmp/pii_report.json
+
+Example: output directory mode
+./dpdp-scan --path /data/input --output /tmp/reports
+# output file becomes: /tmp/reports/pii_output.json
+
+5) Override config per run
+./dpdp-scan --config /etc/dpdp/custom_config.json --path /data/input --output /tmp/report.json
+
+6) Optional one-file binary build
+python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --onefile --zip
+
+Troubleshooting build failures
+- If `python -m spacy download en_core_web_lg` fails on Python 3.14+:
+  - Root cause: current spaCy/Presidio stack is not compatible with Python 3.14 yet.
+  - Fix: recreate `.venv` with Python 3.13 (or 3.12/3.11/3.10).
+- If build fails with `No module named macholib` or `No module named altgraph`, the virtual environment is incomplete or mixed.
+- Recreate `.venv` cleanly and reinstall:
+  rm -rf .venv
+  python3.13 -m venv .venv
+  source .venv/bin/activate
+  python -m pip install --upgrade pip
+  python -m pip install -r requirements.txt
+  python -m pip check
+  python -m spacy download en_core_web_lg
+- Then rerun:
+  python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --zip
+
+Notes
+- Binary artifacts are OS/architecture specific. Build separately for macOS/Linux/Windows.
+- Default logs show progress steps only and do not print detected sensitive values.
+- OCR is disabled by default to avoid runtime dependency on external Tesseract.
+- If `--output` has no extension (for example `/tmp/reports`), it is treated as a directory target.
