@@ -1,0 +1,9 @@
+<beneficiary>
+  <name>Aarav Sharma</name>
+  <email>aarav.sharma@example.in</email>
+  <phone>+91 9876543210</phone>
+  <pan>ABCDE1234F</pan>
+  <aadhaar>234567890124</aadhaar>
+  <ifsc>HDFC0001234</ifsc>
+  <account>123456789012</account>
+</beneficiary>

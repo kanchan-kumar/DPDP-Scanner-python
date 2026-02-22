@@ -1,0 +1,7 @@
+build:
+  version: 1.2.3
+  branch: main
+  optimized: true
+deployment:
+  region: ap-south
+  replicas: 4

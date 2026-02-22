@@ -1,0 +1,4 @@
+service,region,cpu_percent,memory_mb,error_rate
+api,ap-south,57,640,0.12
+worker,ap-south,43,720,0.08
+scheduler,eu-west,38,510,0.03

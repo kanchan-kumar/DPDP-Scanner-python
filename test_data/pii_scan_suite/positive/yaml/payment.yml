@@ -1,0 +1,10 @@
+customer:
+  name: Aarav Sharma
+  email: aarav.sharma@example.in
+  phone: "+91 9876543210"
+  pan: ABCDE1234F
+  aadhaar: "234567890124"
+payout:
+  upi: aarav.sharma@upi
+  ifsc: HDFC0001234
+  account: "123456789012"

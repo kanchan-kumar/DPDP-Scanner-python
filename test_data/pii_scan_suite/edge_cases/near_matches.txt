@@ -1,0 +1,6 @@
+Near matches that should not trigger custom sensitive entities:
+- Invalid Aadhaar checksum: 234567890123
+- PAN-like but invalid: ABCD1234F, ABCDE12345
+- UPI-like but not valid domain list: name(at)bank
+- IFSC-like but invalid: HDFC001234
+- Phone-like but invalid: +91 5123456789

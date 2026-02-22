@@ -1,0 +1,12 @@
+Customer Intake Record
+----------------------
+Full Name: Aarav Sharma
+Contact Email: aarav.sharma@example.in
+Contact Phone: +91 9876543210
+Aadhaar Number: 2345 6789 0124
+PAN: ABCDE1234F
+Passport: K1234567
+UPI VPA: aarav.sharma@upi
+IFSC: HDFC0001234
+Beneficiary Account Number: 123456789012
+Home Address: 22 MG Road, Bengaluru, Karnataka

@@ -1,0 +1,9 @@
+{
+  "service": "pii-scanner-demo",
+  "log_level": "INFO",
+  "retries": 3,
+  "features": {
+    "tokenization_enabled": true,
+    "bulk_mode": false
+  }
+}

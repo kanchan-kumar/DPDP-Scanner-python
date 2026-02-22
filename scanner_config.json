@@ -1,0 +1,71 @@
+{
+  "scan": {
+    "input_paths": [
+      "."
+    ],
+    "recursive": true,
+    "include_extensions": [
+      ".txt",
+      ".csv",
+      ".json",
+      ".log",
+      ".md",
+      ".xml",
+      ".yaml",
+      ".yml",
+      ".pdf",
+      ".docx"
+    ],
+    "exclude_dirs": [
+      ".git",
+      ".idea",
+      ".venv",
+      "venv",
+      "__pycache__",
+      "node_modules",
+      "dist",
+      "build"
+    ],
+    "exclude_file_globs": [
+      "*.pyc",
+      "*.pyo",
+      "*.DS_Store"
+    ],
+    "max_file_size_mb": 20,
+    "read_binary_files_as_text": false,
+    "pdf_max_pages": 50,
+    "ocr_images": false
+  },
+  "presidio": {
+    "language": "en",
+    "supported_languages": [
+      "en"
+    ],
+    "nlp_engine_name": "spacy",
+    "model_name": "en_core_web_lg",
+    "entities": [],
+    "score_threshold": 0.35,
+    "return_decision_process": false,
+    "allow_list": [],
+    "allow_list_match": "exact",
+    "context_words": [
+      "customer",
+      "identity",
+      "bank",
+      "payment",
+      "contact"
+    ]
+  },
+  "custom_recognizers": {
+    "enable_indian_identifiers": true,
+    "aadhaar_checksum_validation": true
+  },
+  "output": {
+    "path": "pii_output.json",
+    "pretty": true,
+    "include_text_snippet": true,
+    "snippet_context_chars": 24,
+    "include_analysis_explanation": false,
+    "include_file_hash": true
+  }
+}

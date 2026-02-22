@@ -1,0 +1,4 @@
+Engineering weekly notes:
+- Service uptime stayed above target.
+- Latency improved after cache tuning.
+- Next sprint focuses on batch processing reliability.

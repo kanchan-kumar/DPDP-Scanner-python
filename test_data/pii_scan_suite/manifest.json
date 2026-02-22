@@ -1,0 +1,66 @@
+{
+  "dataset": "pii_scan_suite",
+  "description": "Synthetic positive/negative fixtures for validating scanner behavior.",
+  "generated_at": "2026-02-22T12:21:23.683103Z",
+  "synthetic_ids": {
+    "valid_aadhaar_1": "234567890124",
+    "valid_aadhaar_2": "345678901238",
+    "invalid_aadhaar": "234567890123",
+    "pan_samples": [
+      "ABCDE1234F",
+      "PQRST2345L"
+    ],
+    "ifsc_samples": [
+      "HDFC0001234",
+      "SBIN0004321"
+    ],
+    "upi_samples": [
+      "aarav.sharma@upi",
+      "meera.nair@ybl"
+    ]
+  },
+  "expected_behavior": {
+    "positive": "Should detect multiple custom entities (IN_AADHAAR, IN_PAN, IN_IFSC, IN_UPI_ID, IN_PASSPORT, IN_BANK_ACCOUNT) plus Presidio built-ins.",
+    "negative": "Should have zero or very low sensitive findings; may still include generic Presidio entities depending on NLP model behavior.",
+    "edge_cases": "Should validate checksum and format constraints, handle duplicates and skipped directories/files as configured."
+  },
+  "folders": {
+    "positive": [
+      "txt",
+      "csv",
+      "json",
+      "log",
+      "md",
+      "xml",
+      "yaml",
+      "yml",
+      "docx",
+      "pdf",
+      "images"
+    ],
+    "negative": [
+      "txt",
+      "csv",
+      "json",
+      "log",
+      "md",
+      "xml",
+      "yaml",
+      "docx",
+      "pdf",
+      "images"
+    ],
+    "edge_cases": [
+      "near_matches",
+      "repeated_values",
+      "large_file",
+      "binary",
+      "node_modules"
+    ]
+  },
+  "notes": [
+    "All data in this suite is synthetic and created for scanner testing only.",
+    "Image files are included for OCR scenarios; enable ocr_images and install Tesseract to scan them.",
+    "node_modules fixture is intended to be skipped by default exclude_dirs."
+  ]
+}
