@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "name": "india_dev_rules",
+    "description": "Development environment override with broader detection."
+  },
+  "include_entities": [
+    "ORGANIZATION",
+    "DATE_TIME",
+    "URL"
+  ],
+  "exclude_entities": [
+    "UK_NHS",
+    "US_SSN",
+    "US_PASSPORT",
+    "US_DRIVER_LICENSE",
+    "US_ITIN"
+  ],
+  "entities": {
+    "PERSON": {
+      "score_threshold": 0.55,
+      "required_context": []
+    },
+    "LOCATION": {
+      "score_threshold": 0.52,
+      "required_context": []
+    },
+    "EMAIL_ADDRESS": {
+      "score_threshold": 0.55
+    }
+  }
+}

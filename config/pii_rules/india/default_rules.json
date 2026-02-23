@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "name": "india_default_rules",
+    "description": "Default environment override for India rules."
+  },
+  "entities": {
+    "PERSON": {
+      "score_threshold": 0.67
+    },
+    "LOCATION": {
+      "score_threshold": 0.62
+    },
+    "IN_ADDRESS": {
+      "score_threshold": 0.58
+    }
+  }
+}

@@ -1,0 +1,265 @@
+{
+  "metadata": {
+    "name": "india_prod_rules",
+    "description": "Production environment override with strict precision controls."
+  },
+  "presidio_overrides": {
+    "score_threshold": 0.45,
+    "context_words": [
+      "aadhaar",
+      "pan",
+      "ifsc",
+      "upi",
+      "bank",
+      "beneficiary",
+      "contact",
+      "email",
+      "mobile",
+      "phone",
+      "address",
+      "full name",
+      "customer name"
+    ]
+  },
+  "include_entities": [
+    "IN_AADHAAR",
+    "IN_PAN",
+    "IN_IFSC",
+    "IN_UPI_ID",
+    "IN_PASSPORT",
+    "IN_BANK_ACCOUNT",
+    "EMAIL_ADDRESS",
+    "PHONE_NUMBER",
+    "PERSON",
+    "LOCATION",
+    "IN_ADDRESS",
+    "IP_ADDRESS",
+    "CREDIT_CARD",
+    "IBAN_CODE"
+  ],
+  "exclude_entities": [
+    "DATE_TIME",
+    "ORGANIZATION",
+    "URL",
+    "UK_NHS",
+    "US_BANK_NUMBER",
+    "US_SSN",
+    "US_PASSPORT",
+    "US_DRIVER_LICENSE",
+    "US_ITIN",
+    "MEDICAL_LICENSE",
+    "CRYPTO"
+  ],
+  "entities": {
+    "IN_AADHAAR": {
+      "score_threshold": 0.8,
+      "normalization": "digits",
+      "include_patterns": [
+        "^[2-9][0-9]{11}$"
+      ],
+      "required_context": [
+        "aadhaar",
+        "uidai",
+        "kyc",
+        "identity"
+      ],
+      "context_window_chars": 96
+    },
+    "IN_PAN": {
+      "score_threshold": 0.72,
+      "include_patterns": [
+        "^[A-Z]{5}[0-9]{4}[A-Z]$"
+      ],
+      "required_context": [
+        "pan",
+        "income tax",
+        "permanent account number",
+        "tax id"
+      ],
+      "context_window_chars": 80
+    },
+    "IN_IFSC": {
+      "score_threshold": 0.68,
+      "include_patterns": [
+        "^[A-Z]{4}0[A-Z0-9]{6}$"
+      ],
+      "required_context": [
+        "ifsc",
+        "bank",
+        "branch"
+      ],
+      "context_window_chars": 72
+    },
+    "IN_UPI_ID": {
+      "score_threshold": 0.74,
+      "include_patterns": [
+        "^[A-Za-z0-9._-]{2,}@(upi|ybl|ibl|axl|paytm|okhdfcbank|okicici|oksbi|okaxis)$"
+      ],
+      "required_context": [
+        "upi",
+        "vpa",
+        "gpay",
+        "phonepe",
+        "paytm",
+        "payment",
+        "collect"
+      ],
+      "forbidden_context": [
+        "email",
+        "mail"
+      ],
+      "context_window_chars": 56
+    },
+    "IN_BANK_ACCOUNT": {
+      "score_threshold": 0.62,
+      "normalization": "digits",
+      "min_length": 11,
+      "max_length": 18,
+      "required_context": [
+        "account",
+        "beneficiary",
+        "bank",
+        "ifsc",
+        "branch"
+      ],
+      "context_window_chars": 120
+    },
+    "EMAIL_ADDRESS": {
+      "score_threshold": 0.68,
+      "include_patterns": [
+        "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+      ],
+      "required_context": [
+        "email",
+        "e-mail",
+        "mail",
+        "contact"
+      ],
+      "context_window_chars": 48
+    },
+    "PHONE_NUMBER": {
+      "score_threshold": 0.7,
+      "normalization": "digits",
+      "min_length": 10,
+      "max_length": 13,
+      "include_patterns": [
+        "^(\\+91[\\-\\s]?)?[6-9][0-9]{9}$",
+        "^(91)?[6-9][0-9]{9}$"
+      ],
+      "required_context": [
+        "phone",
+        "mobile",
+        "contact",
+        "whatsapp",
+        "tel"
+      ],
+      "context_window_chars": 64
+    },
+    "PERSON": {
+      "score_threshold": 0.78,
+      "min_length": 3,
+      "max_length": 64,
+      "include_patterns": [
+        "^[A-Za-z][A-Za-z .'-]{2,63}$",
+        "(?i)^(?:full\\s*name|customer\\s*name|beneficiary\\s*name|applicant\\s*name|employee\\s*name|holder\\s*name|name)\\s*[:\\-]\\s*[A-Za-z][A-Za-z .'-]{2,63}$"
+      ],
+      "required_context": [
+        "name",
+        "full name",
+        "customer name",
+        "beneficiary name",
+        "applicant name",
+        "employee name",
+        "holder name"
+      ],
+      "forbidden_context": [
+        "company",
+        "organization",
+        "team",
+        "service"
+      ],
+      "context_window_chars": 60
+    },
+    "LOCATION": {
+      "score_threshold": 0.72,
+      "required_context": [
+        "address",
+        "street",
+        "road",
+        "lane",
+        "city",
+        "state",
+        "district",
+        "pincode",
+        "pin code",
+        "postal"
+      ],
+      "context_window_chars": 120
+    },
+    "IN_ADDRESS": {
+      "score_threshold": 0.72,
+      "required_context": [
+        "address",
+        "addr",
+        "street",
+        "road",
+        "lane",
+        "city",
+        "state",
+        "district",
+        "pincode",
+        "pin"
+      ],
+      "context_window_chars": 140
+    }
+  },
+  "additional_pattern_recognizers": [
+    {
+      "name": "IN_ADDRESS_RECOGNIZER",
+      "entity": "IN_ADDRESS",
+      "language": "en",
+      "context": [
+        "address",
+        "street",
+        "road",
+        "lane",
+        "city",
+        "state",
+        "pincode",
+        "pin"
+      ],
+      "patterns": [
+        {
+          "name": "india_address_labelled",
+          "regex": "(?i)\\b(?:address|addr)\\s*[:\\-]\\s*[A-Za-z0-9 ,./#\\-]{12,180}",
+          "score": 0.72
+        },
+        {
+          "name": "india_address_with_pincode",
+          "regex": "(?i)\\b(?:flat|house|plot|building|street|st|road|rd|lane|ln|nagar|sector)\\b[\\w ,./#\\-]{0,120}\\b\\d{6}\\b",
+          "score": 0.7
+        }
+      ]
+    },
+    {
+      "name": "IN_NAME_LABEL_RECOGNIZER",
+      "entity": "PERSON",
+      "language": "en",
+      "context": [
+        "name",
+        "customer",
+        "beneficiary",
+        "applicant",
+        "employee",
+        "holder"
+      ],
+      "patterns": [
+        {
+          "name": "name_label_pattern",
+          "regex": "(?i)\\b(?:full\\s*name|customer\\s*name|beneficiary\\s*name|applicant\\s*name|employee\\s*name|name)\\s*[:\\-]\\s*[A-Z][A-Za-z' .-]{2,60}",
+          "score": 0.9
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+{
+  "metadata": {
+    "name": "india_base_rules",
+    "description": "Base PII detection rules for India region."
+  },
+  "presidio_overrides": {
+    "entities": [
+      "IN_AADHAAR",
+      "IN_PAN",
+      "IN_IFSC",
+      "IN_UPI_ID",
+      "IN_PASSPORT",
+      "IN_BANK_ACCOUNT",
+      "EMAIL_ADDRESS",
+      "PHONE_NUMBER",
+      "PERSON",
+      "LOCATION",
+      "IN_ADDRESS",
+      "IP_ADDRESS",
+      "CREDIT_CARD",
+      "IBAN_CODE"
+    ],
+    "score_threshold": 0.35,
+    "entity_score_thresholds": {
+      "IN_AADHAAR": 0.7,
+      "IN_PAN": 0.65,
+      "IN_IFSC": 0.6,
+      "IN_UPI_ID": 0.65,
+      "IN_PASSPORT": 0.65,
+      "IN_BANK_ACCOUNT": 0.45,
+      "PHONE_NUMBER": 0.6,
+      "EMAIL_ADDRESS": 0.6,
+      "PERSON": 0.65,
+      "LOCATION": 0.6,
+      "IN_ADDRESS": 0.55
+    },
+    "context_words": [
+      "customer",
+      "identity",
+      "verification",
+      "aadhaar",
+      "pan",
+      "contact",
+      "email",
+      "phone",
+      "mobile",
+      "address",
+      "bank",
+      "ifsc",
+      "upi",
+      "beneficiary"
+    ]
+  },
+  "custom_recognizers_overrides": {
+    "aadhaar_checksum_validation": true,
+    "upi_generic_pattern": false
+  },
+  "include_entities": [
+    "IN_AADHAAR",
+    "IN_PAN",
+    "IN_IFSC",
+    "IN_UPI_ID",
+    "IN_PASSPORT",
+    "IN_BANK_ACCOUNT",
+    "EMAIL_ADDRESS",
+    "PHONE_NUMBER",
+    "PERSON",
+    "LOCATION",
+    "IN_ADDRESS",
+    "IP_ADDRESS",
+    "CREDIT_CARD",
+    "IBAN_CODE"
+  ],
+  "exclude_entities": [
+    "DATE_TIME",
+    "ORGANIZATION",
+    "UK_NHS",
+    "US_BANK_NUMBER",
+    "US_SSN",
+    "US_PASSPORT",
+    "US_DRIVER_LICENSE",
+    "US_ITIN",
+    "MEDICAL_LICENSE",
+    "CRYPTO",
+    "URL"
+  ],
+  "entities": {
+    "IN_AADHAAR": {
+      "enabled": true,
+      "score_threshold": 0.75,
+      "normalization": "digits",
+      "include_patterns": [
+        "^[2-9]\\d{11}$"
+      ],
+      "exclude_values": [
+        "000000000000",
+        "111111111111"
+      ],
+      "required_context": [
+        "aadhaar",
+        "uidai",
+        "identity",
+        "kyc"
+      ],
+      "context_window_chars": 72
+    },
+    "IN_PAN": {
+      "enabled": true,
+      "score_threshold": 0.65,
+      "include_patterns": [
+        "^[A-Z]{5}[0-9]{4}[A-Z]$"
+      ],
+      "required_context": [
+        "pan",
+        "income tax",
+        "permanent account number",
+        "tax id"
+      ],
+      "context_window_chars": 72
+    },
+    "IN_IFSC": {
+      "enabled": true,
+      "score_threshold": 0.6,
+      "include_patterns": [
+        "^[A-Z]{4}0[A-Z0-9]{6}$"
+      ],
+      "required_context": [
+        "ifsc",
+        "bank",
+        "branch"
+      ],
+      "context_window_chars": 64
+    },
+    "IN_UPI_ID": {
+      "enabled": true,
+      "score_threshold": 0.65,
+      "required_context": [
+        "upi",
+        "vpa",
+        "gpay",
+        "phonepe",
+        "paytm",
+        "payment",
+        "collect"
+      ],
+      "forbidden_context": [
+        "email",
+        "mail"
+      ],
+      "context_window_chars": 48
+    },
+    "IN_BANK_ACCOUNT": {
+      "enabled": true,
+      "score_threshold": 0.45,
+      "normalization": "digits",
+      "min_length": 11,
+      "max_length": 18,
+      "required_context": [
+        "account",
+        "beneficiary",
+        "bank",
+        "ifsc"
+      ],
+      "context_window_chars": 80
+    },
+    "PHONE_NUMBER": {
+      "enabled": true,
+      "score_threshold": 0.6,
+      "normalization": "digits",
+      "min_length": 10,
+      "max_length": 13,
+      "required_context": [
+        "phone",
+        "mobile",
+        "contact",
+        "whatsapp",
+        "tel"
+      ],
+      "context_window_chars": 56
+    },
+    "EMAIL_ADDRESS": {
+      "enabled": true,
+      "score_threshold": 0.6,
+      "forbidden_context": [
+        "dummy",
+        "placeholder"
+      ],
+      "context_window_chars": 40
+    },
+    "PERSON": {
+      "enabled": true,
+      "score_threshold": 0.65,
+      "required_context": [
+        "name",
+        "full name",
+        "customer",
+        "employee",
+        "beneficiary",
+        "holder"
+      ],
+      "context_window_chars": 48
+    },
+    "LOCATION": {
+      "enabled": true,
+      "score_threshold": 0.6,
+      "required_context": [
+        "address",
+        "street",
+        "road",
+        "city",
+        "state",
+        "pincode",
+        "pin code",
+        "postal"
+      ],
+      "context_window_chars": 96
+    },
+    "IN_ADDRESS": {
+      "enabled": true,
+      "score_threshold": 0.55,
+      "required_context": [
+        "address",
+        "addr",
+        "street",
+        "road",
+        "lane",
+        "city",
+        "state",
+        "pincode",
+        "pin"
+      ],
+      "context_window_chars": 120
+    }
+  },
+  "additional_pattern_recognizers": [
+    {
+      "name": "IN_ADDRESS_RECOGNIZER",
+      "entity": "IN_ADDRESS",
+      "language": "en",
+      "context": [
+        "address",
+        "street",
+        "road",
+        "lane",
+        "city",
+        "state",
+        "pincode",
+        "pin"
+      ],
+      "patterns": [
+        {
+          "name": "india_address_labelled",
+          "regex": "(?i)\\b(?:address|addr)\\s*[:\\-]\\s*[A-Za-z0-9 ,./#\\-]{12,180}",
+          "score": 0.68
+        },
+        {
+          "name": "india_address_with_pincode",
+          "regex": "(?i)\\b(?:flat|house|plot|building|street|st|road|rd|lane|ln|nagar|sector)\\b[\\w ,./#\\-]{0,120}\\b\\d{6}\\b",
+          "score": 0.62
+        }
+      ]
+    }
+  ]
+}

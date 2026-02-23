@@ -1,0 +1,20 @@
+{
+  "metadata": {
+    "name": "india_qa_rules",
+    "description": "QA environment override balancing precision and recall."
+  },
+  "entities": {
+    "PERSON": {
+      "score_threshold": 0.62
+    },
+    "LOCATION": {
+      "score_threshold": 0.6
+    },
+    "IN_ADDRESS": {
+      "score_threshold": 0.57
+    },
+    "IN_BANK_ACCOUNT": {
+      "score_threshold": 0.5
+    }
+  }
+}
