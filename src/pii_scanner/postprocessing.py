@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from presidio_analyzer import RecognizerResult
 
@@ -99,6 +99,84 @@ def _should_keep_phone_number(result: RecognizerResult, text: str) -> bool:
     return True
 
 
+def _normalize_value(value: str, normalization: str) -> str:
+    mode = normalization.lower().strip()
+    if mode == "digits":
+        return re.sub(r"\D", "", value)
+    if mode == "lower":
+        return value.lower()
+    return value
+
+
+def _matches_any_pattern(value: str, patterns: List[str]) -> bool:
+    for pattern in patterns:
+        try:
+            if re.search(pattern, value, flags=re.IGNORECASE):
+                return True
+        except re.error:
+            continue
+    return False
+
+
+def _should_keep_by_entity_rule(
+    result: RecognizerResult,
+    text: str,
+    entity_rule: Dict[str, Any],
+) -> bool:
+    if not entity_rule:
+        return True
+    if entity_rule.get("enabled", True) is False:
+        return False
+
+    matched = text[result.start : result.end]
+    normalization = str(entity_rule.get("normalization", "raw"))
+    normalized_value = _normalize_value(matched, normalization)
+
+    include_values = entity_rule.get("include_values", []) or []
+    exclude_values = entity_rule.get("exclude_values", []) or []
+    include_values_normalized = {
+        _normalize_value(str(value), normalization) for value in include_values
+    }
+    exclude_values_normalized = {
+        _normalize_value(str(value), normalization) for value in exclude_values
+    }
+
+    if include_values_normalized and normalized_value not in include_values_normalized:
+        return False
+    if normalized_value in exclude_values_normalized:
+        return False
+
+    include_patterns = [str(pattern) for pattern in (entity_rule.get("include_patterns", []) or [])]
+    exclude_patterns = [str(pattern) for pattern in (entity_rule.get("exclude_patterns", []) or [])]
+    if include_patterns and not _matches_any_pattern(matched, include_patterns):
+        return False
+    if exclude_patterns and _matches_any_pattern(matched, exclude_patterns):
+        return False
+
+    min_length = entity_rule.get("min_length")
+    max_length = entity_rule.get("max_length")
+    if min_length is not None and len(normalized_value) < int(min_length):
+        return False
+    if max_length is not None and len(normalized_value) > int(max_length):
+        return False
+
+    context_window = int(entity_rule.get("context_window_chars", NUMERIC_CONTEXT_WINDOW))
+    context_window = max(0, context_window)
+    snippet_start = max(0, int(result.start) - context_window)
+    snippet_end = min(len(text), int(result.end) + context_window)
+    surrounding = text[snippet_start:snippet_end].lower()
+
+    required_context = [str(item).lower() for item in (entity_rule.get("required_context", []) or [])]
+    forbidden_context = [str(item).lower() for item in (entity_rule.get("forbidden_context", []) or [])]
+
+    if required_context and not any(token in surrounding for token in required_context):
+        return False
+    if forbidden_context and any(token in surrounding for token in forbidden_context):
+        return False
+
+    return True
+
+
 def _resolve_same_span_conflicts(results: Sequence[RecognizerResult]) -> List[RecognizerResult]:
     grouped: Dict[Tuple[int, int], List[RecognizerResult]] = {}
     for result in results:
@@ -126,6 +204,7 @@ def apply_postprocessing(
     results: Iterable[RecognizerResult],
     text: str,
     entity_thresholds: Dict[str, float],
+    entity_rules: Dict[str, Dict[str, Any]],
 ) -> List[RecognizerResult]:
     """
     Apply precision-focused post-processing:
@@ -136,7 +215,12 @@ def apply_postprocessing(
     filtered: List[RecognizerResult] = []
     for result in results:
         min_score = _entity_threshold(result, entity_thresholds)
+        entity_rule = entity_rules.get(result.entity_type, {}) or {}
+        if "score_threshold" in entity_rule:
+            min_score = max(min_score, float(entity_rule["score_threshold"]))
         if float(result.score) < min_score:
+            continue
+        if not _should_keep_by_entity_rule(result, text, entity_rule):
             continue
         if result.entity_type == "IN_BANK_ACCOUNT":
             if not _should_keep_indian_bank_account(result, text):

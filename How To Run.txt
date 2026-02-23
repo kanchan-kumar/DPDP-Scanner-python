@@ -33,6 +33,26 @@ Example: pass output as a directory (auto-creates pii_output.json inside)
 python main.py --path /data/input --output /tmp/reports
 # output file becomes: /tmp/reports/pii_output.json
 
+Rule environment examples (India rule profiles):
+# Use default rules from scanner config
+python main.py --config scanner_config.json --path /data/input --output /tmp/pii_report.json
+
+# Override via CLI for this run only
+python main.py --config scanner_config.json --rules-env prod --path /data/input --output /tmp/pii_report.json
+
+# Override via environment variable
+DPDP_RULES_ENV=qa python main.py --config scanner_config.json --path /data/input --output /tmp/pii_report.json
+
+Optional file-path masking in JSON output
+# Enable masking with basename only
+python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode basename --path /data/input --output /tmp/pii_report.json
+
+# Use relative paths from scan root
+python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode relative --path /data/input --output /tmp/pii_report.json
+
+# Hash paths
+python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode hash --path /data/input --output /tmp/pii_report.json
+
 3) Build standalone executable (Python + dependencies bundled)
 python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --zip
 
@@ -51,6 +71,13 @@ Example: output directory mode
 
 5) Override config per run
 ./dpdp-scan --config /etc/dpdp/custom_config.json --path /data/input --output /tmp/report.json
+
+Rule environment override with executable
+DPDP_RULES_ENV=prod ./dpdp-scan --path /data/input --output /tmp/report.json
+./dpdp-scan --rules-env qa --path /data/input --output /tmp/report.json
+
+Mask file paths with executable
+./dpdp-scan --mask-file-paths --file-path-mask-mode hash --path /data/input --output /tmp/report.json
 
 6) Optional one-file binary build
 python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --onefile --zip
@@ -81,3 +108,8 @@ Notes
   - Use `presidio.entity_score_thresholds` to set stricter per-entity confidence.
   - Use `presidio.chunk_size_chars` and `presidio.spacy_max_length` for large files.
   - Keep `custom_recognizers.upi_generic_pattern=false` to avoid email-like UPI false positives.
+- Rule files live under `config/pii_rules/india/` and are loaded by `rule_engine` section in config.
+- Rule file structure reference: `config/pii_rules/india/README.md`.
+- File path masking modes:
+  - `full` (default), `basename`, `relative`, `hash`, `redacted`.
+- You can set masking in config (`output.mask_file_paths`, `output.file_path_mask_mode`) or override per run via CLI.

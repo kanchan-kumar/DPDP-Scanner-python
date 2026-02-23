@@ -3,8 +3,8 @@
     "name": "presidio-dpdp-scanner",
     "version": "5.0.0"
   },
-  "scan_started_at": "2026-02-22T14:03:05.398952Z",
-  "scan_completed_at": "2026-02-22T14:03:48.904589Z",
+  "scan_started_at": "2026-02-22T14:40:58.093739Z",
+  "scan_completed_at": "2026-02-22T14:41:46.425772Z",
   "config": {
     "scan": {
       "input_paths": [
@@ -61,9 +61,13 @@
         "PHONE_NUMBER",
         "PERSON",
         "LOCATION",
+        "IN_ADDRESS",
+        "IP_ADDRESS",
         "CREDIT_CARD",
         "IBAN_CODE",
-        "IP_ADDRESS"
+        "ORGANIZATION",
+        "DATE_TIME",
+        "URL"
       ]
     },
     "custom_recognizers": {
@@ -81,15 +85,95 @@
         "oksbi",
         "okaxis"
       ]
+    },
+    "rules": {
+      "region": "india",
+      "environment": "dev",
+      "files_loaded": [
+        "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/config/pii_rules/india/base_rules.json",
+        "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/config/pii_rules/india/dev_rules.json"
+      ],
+      "include_entities": [
+        "ORGANIZATION",
+        "DATE_TIME",
+        "URL"
+      ],
+      "exclude_entities": [
+        "UK_NHS",
+        "US_SSN",
+        "US_PASSPORT",
+        "US_DRIVER_LICENSE",
+        "US_ITIN"
+      ]
     }
   },
   "stats": {
     "files_scanned": 25,
     "files_skipped": 0,
     "files_failed": 4,
-    "total_findings": 86
+    "total_findings": 164
   },
   "findings": [
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "PII",
+      "start": 85,
+      "end": 88,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/README.md",
+      "file_hash": "c2a5e33f9acebf9a4939f839e4d4e7257ab040ef2b590d4dafcb71cc1820e03a",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "ures for validating the PII scanner with positive, "
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "main.py",
+      "start": 430,
+      "end": 437,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/README.md",
+      "file_hash": "c2a5e33f9acebf9a4939f839e4d4e7257ab040ef2b590d4dafcb71cc1820e03a",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "epository root:\n\npython main.py --config test_data/pii_"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "OCR",
+      "start": 576,
+      "end": 579,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/README.md",
+      "file_hash": "c2a5e33f9acebf9a4939f839e4d4e7257ab040ef2b590d4dafcb71cc1820e03a",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "ynthetic test values.\n- OCR image fixtures are incl"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "Tesseract",
+      "start": 659,
+      "end": 668,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/README.md",
+      "file_hash": "c2a5e33f9acebf9a4939f839e4d4e7257ab040ef2b590d4dafcb71cc1820e03a",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "_images` is enabled and Tesseract is installed.\n"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 36,
+      "end": 44,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "ues for volume testing:\naarav.sharma@example.in\naarav.sh"
+    },
     {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
@@ -101,6 +185,30 @@
       "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
       "recognizer_name": "EmailRecognizer",
       "snippet": "ues for volume testing:\naarav.sharma@example.in\naarav.sharma@example.in"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 49,
+      "end": 59,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "e testing:\naarav.sharma@example.in\naarav.sharma@example.in"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 60,
+      "end": 68,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "aarav.sharma@example.in\naarav.sharma@example.in\naarav.sh"
     },
     {
       "entity_type": "EMAIL_ADDRESS",
@@ -115,6 +223,30 @@
       "snippet": "aarav.sharma@example.in\naarav.sharma@example.in\naarav.sharma@example.in"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 73,
+      "end": 83,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "example.in\naarav.sharma@example.in\naarav.sharma@example.in"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 84,
+      "end": 92,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "aarav.sharma@example.in\naarav.sharma@example.in\nPAN ABCD"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -125,6 +257,30 @@
       "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
       "recognizer_name": "EmailRecognizer",
       "snippet": "aarav.sharma@example.in\naarav.sharma@example.in\nPAN ABCDE1234F appears "
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 97,
+      "end": 107,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "example.in\naarav.sharma@example.in\nPAN ABCDE1234F appears "
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "PAN ABCDE1234F",
+      "start": 108,
+      "end": 122,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
+      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "aarav.sharma@example.in\nPAN ABCDE1234F appears twice: ABCDE123"
     },
     {
       "entity_type": "IN_PAN",
@@ -151,28 +307,28 @@
       "snippet": "CDE1234F appears twice: ABCDE1234F\nAadhaar 2345 6789 0124 "
     },
     {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "2345 6789 0124",
-      "start": 157,
-      "end": 171,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
-      "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "ice: ABCDE1234F\nAadhaar 2345 6789 0124 repeated 2345 6789 0124"
-    },
-    {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "2345 6789 0124",
-      "start": 181,
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "6789 0124",
+      "start": 186,
       "end": 195,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
       "file_hash": "96ca275a152eb3e52438cc03426697a7b88dd506c6f22e3f1c3df0405bfa4d90",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "2345 6789 0124 repeated 2345 6789 0124\n"
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "6789 0124 repeated 2345 6789 0124\n"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 1.0,
+      "text": "2026-02-22T12:21:23.683103Z",
+      "start": 142,
+      "end": 169,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "DateRecognizer",
+      "snippet": "r.\",\n  \"generated_at\": \"2026-02-22T12:21:23.683103Z\",\n  \"synthetic_ids\": {\n"
     },
     {
       "entity_type": "IN_AADHAAR",
@@ -247,6 +403,18 @@
       "snippet": "  \"HDFC0001234\",\n      \"SBIN0004321\"\n    ],\n    \"upi_sample"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 475,
+      "end": 483,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "\"upi_samples\": [\n      \"aarav.sharma@upi\",\n      \"meera."
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -259,6 +427,18 @@
       "snippet": "\"upi_samples\": [\n      \"aarav.sharma@upi\",\n      \"meera.nair@ybl"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "meera.na",
+      "start": 501,
+      "end": 509,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "rav.sharma@upi\",\n      \"meera.nair@ybl\"\n    ]\n  },\n  \"ex"
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -269,6 +449,78 @@
       "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
       "recognizer_name": "IN_UPI_RECOGNIZER",
       "snippet": "rav.sharma@upi\",\n      \"meera.nair@ybl\"\n    ]\n  },\n  \"expected"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "IN_AADHAAR",
+      "start": 610,
+      "end": 620,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "ltiple custom entities (IN_AADHAAR, IN_PAN, IN_IFSC, IN_UP"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "IN_PAN",
+      "start": 622,
+      "end": 628,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "m entities (IN_AADHAAR, IN_PAN, IN_IFSC, IN_UPI_ID, IN"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "IN_PASSPORT",
+      "start": 650,
+      "end": 661,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "AN, IN_IFSC, IN_UPI_ID, IN_PASSPORT, IN_BANK_ACCOUNT) plus "
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "Presidio",
+      "start": 685,
+      "end": 693,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": ", IN_BANK_ACCOUNT) plus Presidio built-ins.\",\n    \"negat"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "Presidio",
+      "start": 799,
+      "end": 807,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "y still include generic Presidio entities depending on N"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "NLP",
+      "start": 830,
+      "end": 833,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "o entities depending on NLP model behavior.\",\n    \""
     },
     {
       "entity_type": "LOCATION",
@@ -295,6 +547,174 @@
       "snippet": "n\",\n      \"log\",\n      \"md\",\n      \"xml\",\n      \"ya"
     },
     {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "OCR",
+      "start": 1598,
+      "end": 1601,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": " files are included for OCR scenarios; enable ocr_i"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "Tesseract",
+      "start": 1643,
+      "end": 1652,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
+      "file_hash": "3293abfd758ee12a7481abd318980eb1d447accab4c532a4d6da11008b4fde71",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": " ocr_images and install Tesseract to scan them.\",\n    \"no"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "ap",
+      "start": 52,
+      "end": 54,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/csv/metrics.csv",
+      "file_hash": "e2fc52d28b9c99a5ef5e151bb55888237067558d2ac61ba9e54cf3e49e199e34",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "emory_mb,error_rate\napi,ap-south,57,640,0.12\nworke"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "ap",
+      "start": 80,
+      "end": 82,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/csv/metrics.csv",
+      "file_hash": "e2fc52d28b9c99a5ef5e151bb55888237067558d2ac61ba9e54cf3e49e199e34",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "outh,57,640,0.12\nworker,ap-south,43,720,0.08\nsched"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "eu-west,38,510,0.03",
+      "start": 111,
+      "end": 130,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/csv/metrics.csv",
+      "file_hash": "e2fc52d28b9c99a5ef5e151bb55888237067558d2ac61ba9e54cf3e49e199e34",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "h,43,720,0.08\nscheduler,eu-west,38,510,0.03\n"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-22T09:00:00Z",
+      "start": 0,
+      "end": 20,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/log/healthcheck.log",
+      "file_hash": "e5bee8f2879c0b9c714b4515c003f99dc5b4c2858054260b96150cf52a625180",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "2026-02-22T09:00:00Z INFO startup complete\n2"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "INFO",
+      "start": 21,
+      "end": 25,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/log/healthcheck.log",
+      "file_hash": "e5bee8f2879c0b9c714b4515c003f99dc5b4c2858054260b96150cf52a625180",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "2026-02-22T09:00:00Z INFO startup complete\n2026-0"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-22T09:01:00Z",
+      "start": 43,
+      "end": 63,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/log/healthcheck.log",
+      "file_hash": "e5bee8f2879c0b9c714b4515c003f99dc5b4c2858054260b96150cf52a625180",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "Z INFO startup complete\n2026-02-22T09:01:00Z INFO heartbeat ok\n2026-"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-22T09:02:00Z",
+      "start": 82,
+      "end": 102,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/log/healthcheck.log",
+      "file_hash": "e5bee8f2879c0b9c714b4515c003f99dc5b4c2858054260b96150cf52a625180",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "1:00Z INFO heartbeat ok\n2026-02-22T09:02:00Z INFO queue depth=7\n"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "weekly",
+      "start": 12,
+      "end": 18,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/txt/no_pii_notes.txt",
+      "file_hash": "5963679012b6701502443fc57e403b4a49f4eae7577151c56b1dd68fb87cc9fa",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "Engineering weekly notes:\n- Service uptime"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "employee_id",
+      "start": 0,
+      "end": 11,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "employee_id,name,email,phone,pan,aa"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pan,",
+      "start": 29,
+      "end": 33,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "yee_id,name,email,phone,pan,aadhaar,ifsc,upi,account"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "aadhaar",
+      "start": 33,
+      "end": 40,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "id,name,email,phone,pan,aadhaar,ifsc,upi,account\nE001,A"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "ifsc",
+      "start": 41,
+      "end": 45,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "email,phone,pan,aadhaar,ifsc,upi,account\nE001,Aarav "
+    },
+    {
       "entity_type": "LOCATION",
       "category": "PERSONAL",
       "score": 0.85,
@@ -319,6 +739,18 @@
       "snippet": ",upi,account\nE001,Aarav Sharma,aarav.sharma@example.in"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 76,
+      "end": 84,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "count\nE001,Aarav Sharma,aarav.sharma@example.in,+9198765"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -329,6 +761,18 @@
       "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
       "recognizer_name": "EmailRecognizer",
       "snippet": "count\nE001,Aarav Sharma,aarav.sharma@example.in,+919876543210,ABCDE1234"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 89,
+      "end": 99,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "rav Sharma,aarav.sharma@example.in,+919876543210,ABCDE1234"
     },
     {
       "entity_type": "IN_BANK_ACCOUNT",
@@ -343,40 +787,16 @@
       "snippet": "arav.sharma@example.in,+919876543210,ABCDE1234F,234567890124"
     },
     {
-      "entity_type": "IN_PAN",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 0.9,
-      "text": "ABCDE1234F",
-      "start": 114,
-      "end": 124,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
-      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_PAN_RECOGNIZER",
-      "snippet": "xample.in,+919876543210,ABCDE1234F,234567890124,HDFC000123"
-    },
-    {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "234567890124",
-      "start": 125,
-      "end": 137,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
-      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "919876543210,ABCDE1234F,234567890124,HDFC0001234,aarav.sharm"
-    },
-    {
-      "entity_type": "IN_IFSC",
+      "entity_type": "URL",
       "category": "PERSONAL",
-      "score": 0.95,
-      "text": "HDFC0001234",
-      "start": 138,
-      "end": 149,
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 150,
+      "end": 158,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
       "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_IFSC_RECOGNIZER",
-      "snippet": "ABCDE1234F,234567890124,HDFC0001234,aarav.sharma@upi,123456"
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "34567890124,HDFC0001234,aarav.sharma@upi,123456789012\nE0"
     },
     {
       "entity_type": "IN_UPI_ID",
@@ -391,6 +811,30 @@
       "snippet": "34567890124,HDFC0001234,aarav.sharma@upi,123456789012\nE002,Meera"
     },
     {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "Nair",
+      "start": 191,
+      "end": 195,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "123456789012\nE002,Meera Nair,meera.nair@example.in,+"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "meera.na",
+      "start": 196,
+      "end": 204,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
+      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "6789012\nE002,Meera Nair,meera.nair@example.in,+919812345"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -403,64 +847,28 @@
       "snippet": "6789012\nE002,Meera Nair,meera.nair@example.in,+919812345678,PQRST2345"
     },
     {
-      "entity_type": "IN_PAN",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 0.55,
-      "text": "PQRST2345L",
-      "start": 232,
-      "end": 242,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
-      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_PAN_RECOGNIZER",
-      "snippet": "xample.in,+919812345678,PQRST2345L,345678901238,SBIN000432"
-    },
-    {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "345678901238",
-      "start": 243,
-      "end": 255,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
-      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "919812345678,PQRST2345L,345678901238,SBIN0004321,meera.nair@"
-    },
-    {
-      "entity_type": "IN_IFSC",
+      "entity_type": "URL",
       "category": "PERSONAL",
-      "score": 0.95,
-      "text": "SBIN0004321",
-      "start": 256,
-      "end": 267,
+      "score": 0.5,
+      "text": "example.in",
+      "start": 207,
+      "end": 217,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
       "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_IFSC_RECOGNIZER",
-      "snippet": "PQRST2345L,345678901238,SBIN0004321,meera.nair@ybl,22223333"
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "2,Meera Nair,meera.nair@example.in,+919812345678,PQRST2345"
     },
     {
-      "entity_type": "IN_UPI_ID",
+      "entity_type": "URL",
       "category": "PERSONAL",
-      "score": 1.0,
-      "text": "meera.nair@ybl",
+      "score": 0.5,
+      "text": "meera.na",
       "start": 268,
-      "end": 282,
+      "end": 276,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
       "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_UPI_RECOGNIZER",
+      "recognizer_name": "UrlRecognizer",
       "snippet": "45678901238,SBIN0004321,meera.nair@ybl,222233334444\n"
-    },
-    {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "222233334444",
-      "start": 283,
-      "end": 295,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
-      "file_hash": "d5a8e4711e938b62c2000b585961befa44104ba7f0cb8de9b37b7ea9c464c348",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "N0004321,meera.nair@ybl,222233334444\n"
     },
     {
       "entity_type": "PERSON",
@@ -475,6 +883,18 @@
       "snippet": " [\n    {\n      \"name\": \"Aarav Sharma\",\n      \"email\": \"aarav"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 92,
+      "end": 100,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/json/user_export.json",
+      "file_hash": "bdce8753ebb198e16b9352d527d5d496ccd1147306fd221c6c98e4bfd4ce89fe",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "harma\",\n      \"email\": \"aarav.sharma@example.in\",\n      "
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -485,6 +905,18 @@
       "file_hash": "bdce8753ebb198e16b9352d527d5d496ccd1147306fd221c6c98e4bfd4ce89fe",
       "recognizer_name": "EmailRecognizer",
       "snippet": "harma\",\n      \"email\": \"aarav.sharma@example.in\",\n      \"mobile\": \"+91 "
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 105,
+      "end": 115,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/json/user_export.json",
+      "file_hash": "bdce8753ebb198e16b9352d527d5d496ccd1147306fd221c6c98e4bfd4ce89fe",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": " \"email\": \"aarav.sharma@example.in\",\n      \"mobile\": \"+91 "
     },
     {
       "entity_type": "PHONE_NUMBER",
@@ -523,6 +955,18 @@
       "snippet": "34F\",\n      \"aadhaar\": \"234567890124\",\n      \"upi\": \"aarav.s"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 226,
+      "end": 234,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/json/user_export.json",
+      "file_hash": "bdce8753ebb198e16b9352d527d5d496ccd1147306fd221c6c98e4bfd4ce89fe",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "7890124\",\n      \"upi\": \"aarav.sharma@upi\",\n      \"ifsc\":"
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -559,6 +1003,18 @@
       "snippet": "234\",\n      \"account\": \"123456789012\"\n    }\n  ]\n}\n"
     },
     {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-22T10:01:11Z",
+      "start": 0,
+      "end": 20,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "2026-02-22T10:01:11Z INFO user=Aarav Sharma "
+    },
+    {
       "entity_type": "PERSON",
       "category": "PERSONAL",
       "score": 0.85,
@@ -583,6 +1039,30 @@
       "snippet": " INFO user=Aarav Sharma email=aarav.sharma@example.in action=login ip=10.0.1."
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 50,
+      "end": 58,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "user=Aarav Sharma email=aarav.sharma@example.in action=l"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 63,
+      "end": 73,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "arma email=aarav.sharma@example.in action=login ip=10.0.1."
+    },
+    {
       "entity_type": "IP_ADDRESS",
       "category": "PERSONAL",
       "score": 0.95,
@@ -593,6 +1073,66 @@
       "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
       "recognizer_name": "IpRecognizer",
       "snippet": "mple.in action=login ip=10.0.1.2\n2026-02-22T10:05:42Z IN"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-",
+      "start": 99,
+      "end": 107,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "ction=login ip=10.0.1.2\n2026-02-22T10:05:42Z INFO paymen"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.8,
+      "text": "2026-02-22T10:05:42Z",
+      "start": 99,
+      "end": 119,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "DateRecognizer",
+      "snippet": "ction=login ip=10.0.1.2\n2026-02-22T10:05:42Z INFO payment upi=aarav."
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "INFO",
+      "start": 120,
+      "end": 124,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": ".2\n2026-02-22T10:05:42Z INFO payment upi=aarav.sharm"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "upi=aarav.sharma@upi ifsc=",
+      "start": 133,
+      "end": 159,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "T10:05:42Z INFO payment upi=aarav.sharma@upi ifsc=HDFC0001234 account=1234"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 137,
+      "end": 145,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "05:42Z INFO payment upi=aarav.sharma@upi ifsc=HDFC000123"
     },
     {
       "entity_type": "IN_UPI_ID",
@@ -631,6 +1171,42 @@
       "snippet": "fsc=HDFC0001234 account=123456789012\n2026-02-22T10:11:08Z IN"
     },
     {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "2026-02-22T10:11:08Z",
+      "start": 192,
+      "end": 212,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "34 account=123456789012\n2026-02-22T10:11:08Z INFO identity pan=ABCDE"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "INFO",
+      "start": 213,
+      "end": 217,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "12\n2026-02-22T10:11:08Z INFO identity pan=ABCDE1234F"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pan=ABCDE1234F",
+      "start": 227,
+      "end": 241,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
+      "file_hash": "3f16a56ec1b143b07bb5ee2b818ce96a4820fdba423d0db178673479145b4bc4",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "10:11:08Z INFO identity pan=ABCDE1234F aadhaar=234567890124\n"
+    },
+    {
       "entity_type": "IN_PAN",
       "category": "SENSITIVE_PERSONAL",
       "score": 0.9,
@@ -667,6 +1243,18 @@
       "snippet": "Support Note\n\nReporter: Aarav Sharma\nContact: aarav.sharma@example.i"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 57,
+      "end": 65,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": ": Aarav Sharma\nContact: aarav.sharma@example.in\nBackup c"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -679,6 +1267,54 @@
       "snippet": ": Aarav Sharma\nContact: aarav.sharma@example.in\nBackup contact: +91 987"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 70,
+      "end": 80,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "a\nContact: aarav.sharma@example.in\nBackup contact: +91 987"
+    },
+    {
+      "entity_type": "PHONE_NUMBER",
+      "category": "PERSONAL",
+      "score": 0.75,
+      "text": "+91 9876543210",
+      "start": 97,
+      "end": 111,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "PhoneRecognizer",
+      "snippet": "mple.in\nBackup contact: +91 9876543210\nUPI in dispute: aarav.s"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "UPI",
+      "start": 112,
+      "end": 115,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "contact: +91 9876543210\nUPI in dispute: aarav.sharm"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 128,
+      "end": 136,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "6543210\nUPI in dispute: aarav.sharma@upi\nGovernment IDs:"
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -689,6 +1325,18 @@
       "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
       "recognizer_name": "IN_UPI_RECOGNIZER",
       "snippet": "6543210\nUPI in dispute: aarav.sharma@upi\nGovernment IDs: PAN ABC"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "PAN ABCDE1234F",
+      "start": 161,
+      "end": 175,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
+      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "rma@upi\nGovernment IDs: PAN ABCDE1234F, Passport K1234567, Aad"
     },
     {
       "entity_type": "IN_PAN",
@@ -715,18 +1363,6 @@
       "snippet": "AN ABCDE1234F, Passport K1234567, Aadhaar 2345 6789 0124"
     },
     {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "2345 6789 0124",
-      "start": 204,
-      "end": 218,
-      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
-      "file_hash": "79383a3584abb8ab8d9cf54749bae7d50e4c0a45eb210be05f062e73d31bf0b7",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "sport K1234567, Aadhaar 2345 6789 0124\n"
-    },
-    {
       "entity_type": "PERSON",
       "category": "PERSONAL",
       "score": 0.85,
@@ -737,6 +1373,18 @@
       "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
       "recognizer_name": "SpacyRecognizer",
       "snippet": "------------\nFull Name: Aarav Sharma\nContact Email: aarav.sharma@exa"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 85,
+      "end": 93,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "v Sharma\nContact Email: aarav.sharma@example.in\nContact "
     },
     {
       "entity_type": "EMAIL_ADDRESS",
@@ -751,6 +1399,18 @@
       "snippet": "v Sharma\nContact Email: aarav.sharma@example.in\nContact Phone: +91 9876"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 98,
+      "end": 108,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "act Email: aarav.sharma@example.in\nContact Phone: +91 9876"
+    },
+    {
       "entity_type": "PHONE_NUMBER",
       "category": "PERSONAL",
       "score": 0.75,
@@ -763,16 +1423,28 @@
       "snippet": "ample.in\nContact Phone: +91 9876543210\nAadhaar Number: 2345 67"
     },
     {
-      "entity_type": "IN_AADHAAR",
-      "category": "SENSITIVE_PERSONAL",
-      "score": 1.0,
-      "text": "2345 6789 0124",
-      "start": 155,
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "6789 0124",
+      "start": 160,
       "end": 169,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
       "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
-      "recognizer_name": "IN_AADHAAR_RECOGNIZER",
-      "snippet": "6543210\nAadhaar Number: 2345 6789 0124\nPAN: ABCDE1234F\nPasspor"
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "10\nAadhaar Number: 2345 6789 0124\nPAN: ABCDE1234F\nPasspor"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "PAN",
+      "start": 170,
+      "end": 173,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": " Number: 2345 6789 0124\nPAN: ABCDE1234F\nPassport: K"
     },
     {
       "entity_type": "IN_PAN",
@@ -799,6 +1471,30 @@
       "snippet": "N: ABCDE1234F\nPassport: K1234567\nUPI VPA: aarav.sharma@u"
     },
     {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "UPI VPA",
+      "start": 205,
+      "end": 212,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "234F\nPassport: K1234567\nUPI VPA: aarav.sharma@upi\nIFSC:"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 214,
+      "end": 222,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "port: K1234567\nUPI VPA: aarav.sharma@upi\nIFSC: HDFC00012"
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -809,6 +1505,18 @@
       "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
       "recognizer_name": "IN_UPI_RECOGNIZER",
       "snippet": "port: K1234567\nUPI VPA: aarav.sharma@upi\nIFSC: HDFC0001234\nBenef"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "IFSC",
+      "start": 231,
+      "end": 235,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "I VPA: aarav.sharma@upi\nIFSC: HDFC0001234\nBeneficiar"
     },
     {
       "entity_type": "IN_IFSC",
@@ -835,6 +1543,18 @@
       "snippet": "ficiary Account Number: 123456789012\nHome Address: 22 MG Roa"
     },
     {
+      "entity_type": "IN_ADDRESS",
+      "category": "PERSONAL",
+      "score": 1.0,
+      "text": "Address: 22 MG Road, Bengaluru, Karnataka",
+      "start": 295,
+      "end": 336,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
+      "file_hash": "c77be779aebcda864204a855e3a1b489b128a818e6f68c84da402af92b77e4f5",
+      "recognizer_name": "IN_ADDRESS_RECOGNIZER",
+      "snippet": "mber: 123456789012\nHome Address: 22 MG Road, Bengaluru, Karnataka\n"
+    },
+    {
       "entity_type": "LOCATION",
       "category": "PERSONAL",
       "score": 0.85,
@@ -859,6 +1579,18 @@
       "snippet": " 22 MG Road, Bengaluru, Karnataka\n"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 51,
+      "end": 59,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/xml/beneficiary.xml",
+      "file_hash": "2a4bc7a8f5abc03d024d604df8cb244350398c393ea6e57f658192be97907df2",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": " Sharma</name>\n  <email>aarav.sharma@example.in</email>\n"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -869,6 +1601,18 @@
       "file_hash": "2a4bc7a8f5abc03d024d604df8cb244350398c393ea6e57f658192be97907df2",
       "recognizer_name": "EmailRecognizer",
       "snippet": " Sharma</name>\n  <email>aarav.sharma@example.in</email>\n  <phone>+91 98"
+    },
+    {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 64,
+      "end": 74,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/xml/beneficiary.xml",
+      "file_hash": "2a4bc7a8f5abc03d024d604df8cb244350398c393ea6e57f658192be97907df2",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": ">\n  <email>aarav.sharma@example.in</email>\n  <phone>+91 98"
     },
     {
       "entity_type": "PHONE_NUMBER",
@@ -943,6 +1687,18 @@
       "snippet": "customer:\n  name: Aarav Sharma\n  email: aarav.sharma@e"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 40,
+      "end": 48,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
+      "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": ": Aarav Sharma\n  email: aarav.sharma@example.in\n  phone:"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -955,6 +1711,18 @@
       "snippet": ": Aarav Sharma\n  email: aarav.sharma@example.in\n  phone: \"+91 987654321"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 53,
+      "end": 63,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
+      "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "a\n  email: aarav.sharma@example.in\n  phone: \"+91 987654321"
+    },
+    {
       "entity_type": "PHONE_NUMBER",
       "category": "PERSONAL",
       "score": 0.75,
@@ -965,6 +1733,18 @@
       "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
       "recognizer_name": "PhoneRecognizer",
       "snippet": "ma@example.in\n  phone: \"+91 9876543210\"\n  pan: ABCDE1234F\n  aa"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "9876543210",
+      "start": 78,
+      "end": 88,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
+      "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "xample.in\n  phone: \"+91 9876543210\"\n  pan: ABCDE1234F\n  aa"
     },
     {
       "entity_type": "IN_PAN",
@@ -991,6 +1771,18 @@
       "snippet": " ABCDE1234F\n  aadhaar: \"234567890124\"\npayout:\n  upi: aarav.s"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "aarav.sh",
+      "start": 149,
+      "end": 157,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
+      "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "7890124\"\npayout:\n  upi: aarav.sharma@upi\n  ifsc: HDFC000"
+    },
+    {
       "entity_type": "IN_UPI_ID",
       "category": "PERSONAL",
       "score": 1.0,
@@ -1001,6 +1793,18 @@
       "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
       "recognizer_name": "IN_UPI_RECOGNIZER",
       "snippet": "7890124\"\npayout:\n  upi: aarav.sharma@upi\n  ifsc: HDFC0001234\n  a"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "aarav.sharma@upi\n  ifsc:",
+      "start": 149,
+      "end": 173,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
+      "file_hash": "23df64d52246d7a22787f191d0e30da7d2bc458b1511bfcdea7f463b51333bdf",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "7890124\"\npayout:\n  upi: aarav.sharma@upi\n  ifsc: HDFC0001234\n  account: "
     },
     {
       "entity_type": "IN_IFSC",
@@ -1039,6 +1843,18 @@
       "snippet": "applicant: Meera Nair\ncontact_email: meera.na"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "meera.na",
+      "start": 37,
+      "end": 45,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yml/onboarding.yml",
+      "file_hash": "edd23e8324b3ac512324ca4b187497b344dcf772f8b16e5f99e859ca8e0eb584",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "era Nair\ncontact_email: meera.nair@example.in\ncontact_ph"
+    },
+    {
       "entity_type": "EMAIL_ADDRESS",
       "category": "PERSONAL",
       "score": 1.0,
@@ -1051,6 +1867,18 @@
       "snippet": "era Nair\ncontact_email: meera.nair@example.in\ncontact_phone: +91 9812"
     },
     {
+      "entity_type": "URL",
+      "category": "PERSONAL",
+      "score": 0.5,
+      "text": "example.in",
+      "start": 48,
+      "end": 58,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yml/onboarding.yml",
+      "file_hash": "edd23e8324b3ac512324ca4b187497b344dcf772f8b16e5f99e859ca8e0eb584",
+      "recognizer_name": "UrlRecognizer",
+      "snippet": "ntact_email: meera.nair@example.in\ncontact_phone: +91 9812"
+    },
+    {
       "entity_type": "PHONE_NUMBER",
       "category": "PERSONAL",
       "score": 0.75,
@@ -1061,6 +1889,18 @@
       "file_hash": "edd23e8324b3ac512324ca4b187497b344dcf772f8b16e5f99e859ca8e0eb584",
       "recognizer_name": "PhoneRecognizer",
       "snippet": "ample.in\ncontact_phone: +91 9812345678\npan: PQRST2345L\naadhaar"
+    },
+    {
+      "entity_type": "DATE_TIME",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "9812345678",
+      "start": 78,
+      "end": 88,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yml/onboarding.yml",
+      "file_hash": "edd23e8324b3ac512324ca4b187497b344dcf772f8b16e5f99e859ca8e0eb584",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "e.in\ncontact_phone: +91 9812345678\npan: PQRST2345L\naadhaar"
     },
     {
       "entity_type": "IN_PAN",
@@ -1099,6 +1939,18 @@
       "snippet": " 345678901238\npassport: M2345678\n"
     },
     {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "kanchankumar/Documents",
+      "start": 49,
+      "end": 71,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "paths\": [\n      \"/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP"
+    },
+    {
       "entity_type": "PERSON",
       "category": "PERSONAL",
       "score": 0.85,
@@ -1106,43 +1958,151 @@
       "start": 209,
       "end": 213,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
-      "file_hash": "7d45f0620bf2270b63f30fb2c6f9c1edd637c197ca8c0b4c6c0f067ae8971d1f",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
       "recognizer_name": "SpacyRecognizer",
       "snippet": " [\n      \".txt\",\n      \".csv\",\n      \".json\",\n      "
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "IN_AADHAAR",
+      "start": 813,
+      "end": 823,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "   \"entities\": [\n      \"IN_AADHAAR\",\n      \"IN_PAN\",\n     "
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "ibl",
+      "start": 2008,
+      "end": 2011,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "i\",\n      \"ybl\",\n      \"ibl\",\n      \"axl\",\n      \"p"
     },
     {
       "entity_type": "PERSON",
       "category": "PERSONAL",
       "score": 0.85,
       "text": "axl",
-      "start": 2001,
-      "end": 2004,
+      "start": 2021,
+      "end": 2024,
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
-      "file_hash": "7d45f0620bf2270b63f30fb2c6f9c1edd637c197ca8c0b4c6c0f067ae8971d1f",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
       "recognizer_name": "SpacyRecognizer",
       "snippet": "l\",\n      \"ibl\",\n      \"axl\",\n      \"paytm\",\n      "
+    },
+    {
+      "entity_type": "LOCATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "india",
+      "start": 2175,
+      "end": 2180,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "\": true,\n    \"region\": \"india\",\n    \"environment_vari"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pii_rules/india",
+      "start": 2334,
+      "end": 2349,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "es_file\": \"../../config/pii_rules/india/base_rules.json\",\n    \""
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pii_rules/india/default_rules.json",
+      "start": 2426,
+      "end": 2460,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "default\": \"../../config/pii_rules/india/default_rules.json\",\n      \"dev\": \"../../c"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pii_rules/india/dev_rules.json",
+      "start": 2490,
+      "end": 2520,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "   \"dev\": \"../../config/pii_rules/india/dev_rules.json\",\n      \"qa\": \"../../co"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pii_rules/india/qa_rules.json",
+      "start": 2549,
+      "end": 2578,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "    \"qa\": \"../../config/pii_rules/india/qa_rules.json\",\n      \"prod\": \"../../"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "pii_rules/india/prod_rules.json",
+      "start": 2609,
+      "end": 2640,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": "  \"prod\": \"../../config/pii_rules/india/prod_rules.json\"\n    }\n  },\n  \"output\":"
+    },
+    {
+      "entity_type": "ORGANIZATION",
+      "category": "PERSONAL",
+      "score": 0.85,
+      "text": "kanchankumar/Documents",
+      "start": 2687,
+      "end": 2709,
+      "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
+      "file_hash": "f024ebec78ed0b481b4485af5d780e4953da99876f62a1ec0ada98b452d3f417",
+      "recognizer_name": "SpacyRecognizer",
+      "snippet": ": {\n    \"path\": \"/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP"
     }
   ],
   "files": [
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/scan_config_text_and_docs.json",
       "status": "scanned",
-      "findings_count": 2
+      "findings_count": 12
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/README.md",
       "status": "scanned",
-      "findings_count": 0
+      "findings_count": 4
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/manifest.json",
       "status": "scanned",
-      "findings_count": 10
+      "findings_count": 21
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/txt/customer_profile.txt",
       "status": "scanned",
-      "findings_count": 11
+      "findings_count": 18
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/pdf/loan_application.pdf",
@@ -1153,37 +2113,37 @@
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/xml/beneficiary.xml",
       "status": "scanned",
-      "findings_count": 6
+      "findings_count": 8
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/json/user_export.json",
       "status": "scanned",
-      "findings_count": 8
+      "findings_count": 11
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/csv/payroll_records.csv",
       "status": "scanned",
-      "findings_count": 14
+      "findings_count": 17
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/md/incident_notes.md",
       "status": "scanned",
-      "findings_count": 6
+      "findings_count": 11
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yml/onboarding.yml",
       "status": "scanned",
-      "findings_count": 6
+      "findings_count": 9
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/yaml/payment.yml",
       "status": "scanned",
-      "findings_count": 8
+      "findings_count": 13
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/log/app_access.log",
       "status": "scanned",
-      "findings_count": 8
+      "findings_count": 19
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/positive/docx/onboarding_form.docx",
@@ -1194,7 +2154,7 @@
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/repeated_values.txt",
       "status": "scanned",
-      "findings_count": 7
+      "findings_count": 13
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/edge_cases/near_matches.txt",
@@ -1209,7 +2169,7 @@
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/txt/no_pii_notes.txt",
       "status": "scanned",
-      "findings_count": 0
+      "findings_count": 1
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/pdf/training_material.pdf",
@@ -1230,7 +2190,7 @@
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/csv/metrics.csv",
       "status": "scanned",
-      "findings_count": 0
+      "findings_count": 3
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/md/public_readme.md",
@@ -1245,7 +2205,7 @@
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/log/healthcheck.log",
       "status": "scanned",
-      "findings_count": 0
+      "findings_count": 4
     },
     {
       "file_path": "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/test_data/pii_scan_suite/negative/docx/project_summary.docx",

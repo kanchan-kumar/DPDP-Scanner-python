@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent
 ENTRYPOINT = ROOT / "main.py"
 DEFAULT_CONFIG = ROOT / "scanner_config.json"
 SRC_ROOT = ROOT / "src"
+RULES_ROOT = ROOT / "config" / "pii_rules"
 MIN_SUPPORTED_PYTHON = (3, 10)
 MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 14)
 REQUIRED_BUILD_MODULES = ["PyInstaller", "altgraph"]
@@ -96,6 +97,8 @@ def build_command(args: argparse.Namespace) -> List[str]:
 
     if DEFAULT_CONFIG.exists():
         cmd.extend(["--add-data", f"{DEFAULT_CONFIG}{os.pathsep}."])
+    if RULES_ROOT.exists():
+        cmd.extend(["--add-data", f"{RULES_ROOT}{os.pathsep}config/pii_rules"])
 
     collect_candidates = [
         "pii_scanner",
@@ -147,6 +150,18 @@ def post_build_config_copy(args: argparse.Namespace) -> Optional[Path]:
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(DEFAULT_CONFIG, target)
     print(f"Config file copied to: {target}")
+    return target
+
+
+def post_build_rules_copy(args: argparse.Namespace) -> Optional[Path]:
+    if not RULES_ROOT.exists():
+        return None
+    target = output_root(args) / "config" / "pii_rules"
+    if target.exists():
+        shutil.rmtree(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(RULES_ROOT, target)
+    print(f"Rule directory copied to: {target}")
     return target
 
 
@@ -240,6 +255,10 @@ def create_zip_package(args: argparse.Namespace) -> Optional[Path]:
         for candidate in file_candidates:
             if candidate.exists():
                 shutil.copy2(candidate, bundle_dir / candidate.name)
+
+        rule_dir = output_root(args) / "config"
+        if rule_dir.exists():
+            shutil.copytree(rule_dir, bundle_dir / "config", dirs_exist_ok=True)
 
         shutil.make_archive(str(archive_base), "zip", root_dir=bundle_dir.parent, base_dir=bundle_dir.name)
     else:
@@ -344,6 +363,7 @@ def main() -> int:
         env.setdefault("PYINSTALLER_CONFIG_DIR", str(pyi_config_dir))
         subprocess.run(cmd, check=True, env=env)
         post_build_config_copy(args)
+        post_build_rules_copy(args)
         create_command_launchers(args)
         if args.zip:
             create_zip_package(args)

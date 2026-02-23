@@ -190,10 +190,62 @@ def build_indian_recognizers(
     ]
 
 
+def build_rule_pattern_recognizers(
+    rule_set: Dict[str, Any],
+    default_language: str,
+) -> List[PatternRecognizer]:
+    """Build extra PatternRecognizers declared in rule files."""
+    recognizers: List[PatternRecognizer] = []
+    entity_rules = rule_set.get("entities", {}) or {}
+
+    for item in rule_set.get("additional_pattern_recognizers", []) or []:
+        if not isinstance(item, dict):
+            continue
+        entity_name = str(item.get("entity", "")).strip()
+        recognizer_name = str(item.get("name", "")).strip()
+        if not entity_name or not recognizer_name:
+            continue
+
+        entity_cfg = entity_rules.get(entity_name, {}) or {}
+        if entity_cfg.get("enabled", True) is False:
+            continue
+
+        pattern_objects: List[Pattern] = []
+        for pattern in item.get("patterns", []) or []:
+            if not isinstance(pattern, dict):
+                continue
+            pattern_name = str(pattern.get("name", "")).strip()
+            regex = str(pattern.get("regex", "")).strip()
+            if not pattern_name or not regex:
+                continue
+            score = float(pattern.get("score", 0.5))
+            pattern_objects.append(
+                Pattern(name=pattern_name, regex=regex, score=score)
+            )
+
+        if not pattern_objects:
+            continue
+
+        language = str(item.get("language", default_language)).strip() or default_language
+        context = [str(token) for token in (item.get("context", []) or []) if str(token).strip()]
+        recognizers.append(
+            PatternRecognizer(
+                supported_entity=entity_name,
+                name=recognizer_name,
+                supported_language=language,
+                patterns=pattern_objects,
+                context=context,
+            )
+        )
+
+    return recognizers
+
+
 def build_analyzer(config: Dict[str, Any], logger: logging.Logger) -> AnalyzerEngine:
     """Construct AnalyzerEngine with predefined and custom recognizers."""
     presidio_cfg = config["presidio"]
     custom_cfg = config["custom_recognizers"]
+    rule_set = config.get("_resolved_rules", {}) or {}
 
     logger.info("STEP_START: configure_tldextract")
     configure_tldextract_offline()
@@ -244,6 +296,11 @@ def build_analyzer(config: Dict[str, Any], logger: logging.Logger) -> AnalyzerEn
         ):
             registry.add_recognizer(recognizer)
         logger.info("STEP_DONE: load_custom_recognizers")
+
+    logger.info("STEP_START: load_rule_pattern_recognizers")
+    for recognizer in build_rule_pattern_recognizers(rule_set, default_language=language):
+        registry.add_recognizer(recognizer)
+    logger.info("STEP_DONE: load_rule_pattern_recognizers")
 
     context_cfg = presidio_cfg.get("context_enhancer", {}) or {}
     context_enhancer = None

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from presidio_analyzer import RecognizerResult
@@ -23,6 +22,7 @@ PERSONAL_ENTITY_TYPES = {
     "PHONE_NUMBER",
     "EMAIL_ADDRESS",
     "LOCATION",
+    "IN_ADDRESS",
     "IN_IFSC",
     "IN_UPI_ID",
     "IN_BANK_ACCOUNT",
@@ -59,7 +59,7 @@ def deduplicate_results(results: Sequence[RecognizerResult], text: str) -> List[
 def build_finding(
     result: RecognizerResult,
     text: str,
-    file_path: Path,
+    file_path: str,
     file_hash: Optional[str],
     output_cfg: Dict[str, object],
 ) -> Dict[str, object]:
@@ -73,7 +73,7 @@ def build_finding(
         "text": matched_text,
         "start": int(result.start),
         "end": int(result.end),
-        "file_path": str(file_path),
+        "file_path": file_path,
     }
 
     if file_hash:
@@ -101,4 +101,3 @@ def build_finding(
         finding["analysis_explanation"] = result.analysis_explanation.to_dict()
 
     return finding
-

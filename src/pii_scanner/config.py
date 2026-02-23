@@ -58,6 +58,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "PHONE_NUMBER",
             "PERSON",
             "LOCATION",
+            "IN_ADDRESS",
             "CREDIT_CARD",
             "IBAN_CODE",
             "IP_ADDRESS",
@@ -101,6 +102,20 @@ DEFAULT_CONFIG: Dict[str, Any] = {
             "okaxis",
         ],
     },
+    "rule_engine": {
+        "enabled": True,
+        "region": "india",
+        "environment_variable": "DPDP_RULES_ENV",
+        "default_environment": "default",
+        "environment": "default",
+        "base_rules_file": "config/pii_rules/india/base_rules.json",
+        "environment_rules": {
+            "default": "config/pii_rules/india/default_rules.json",
+            "dev": "config/pii_rules/india/dev_rules.json",
+            "qa": "config/pii_rules/india/qa_rules.json",
+            "prod": "config/pii_rules/india/prod_rules.json",
+        },
+    },
     "output": {
         "path": "pii_output.json",
         "pretty": True,
@@ -108,6 +123,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "snippet_context_chars": 24,
         "include_analysis_explanation": False,
         "include_file_hash": True,
+        "mask_file_paths": False,
+        "file_path_mask_mode": "full",
+        "file_path_base_dir": "",
+        "file_path_hash_salt": "",
     },
 }
 

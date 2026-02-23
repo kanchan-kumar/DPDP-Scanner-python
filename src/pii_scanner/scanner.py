@@ -11,9 +11,11 @@ from presidio_analyzer import AnalyzerEngine, RecognizerResult
 
 from .discovery import iter_candidate_files
 from .extractors import extract_text
+from .path_masking import build_file_path_masker
 from .postprocessing import apply_postprocessing
 from .recognizers import build_analyzer
 from .reporting import build_finding, deduplicate_results
+from .rules import apply_rule_set_to_config, load_effective_rule_set
 from .utils import sha256_file, utc_now
 
 
@@ -83,12 +85,15 @@ def _analyze_chunked(
 def scan_file(
     analyzer: AnalyzerEngine,
     path: Path,
+    output_file_path: str,
     config: Dict[str, Any],
 ) -> Tuple[List[Dict[str, object]], Optional[str]]:
     """Scan one file and return findings/error tuple."""
     scan_cfg = config["scan"]
     presidio_cfg = config["presidio"]
     output_cfg = config["output"]
+    rule_set = config.get("_resolved_rules", {}) or {}
+    entity_rules = rule_set.get("entities", {}) or {}
 
     try:
         text = extract_text(path, scan_cfg)
@@ -115,6 +120,7 @@ def scan_file(
         results=results,
         text=text,
         entity_thresholds=thresholds,
+        entity_rules=entity_rules,
     )
 
     if entities:
@@ -128,7 +134,7 @@ def scan_file(
         build_finding(
             result=result,
             text=text,
-            file_path=path,
+            file_path=output_file_path,
             file_hash=file_hash,
             output_cfg=output_cfg,
         )
@@ -143,6 +149,17 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
     output_cfg = config["output"]
     output_path = Path(output_cfg.get("path", "pii_output.json")).resolve()
     max_size_bytes = int(scan_cfg.get("max_file_size_mb", 20) * 1024 * 1024)
+    file_path_masker = build_file_path_masker(output_cfg, scan_cfg)
+
+    logger.info("STEP_START: load_rules")
+    rule_set = load_effective_rule_set(config)
+    apply_rule_set_to_config(config, rule_set)
+    logger.info(
+        "STEP_DONE: load_rules region=%s environment=%s files=%d",
+        rule_set.get("metadata", {}).get("region", "n/a"),
+        rule_set.get("metadata", {}).get("environment", "n/a"),
+        len(rule_set.get("metadata", {}).get("files_loaded", []) or []),
+    )
 
     logger.info("STEP_START: build_analyzer")
     analyzer = build_analyzer(config, logger)
@@ -176,11 +193,12 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
                 continue
 
             file_size = file_path.stat().st_size
+            output_file_path = file_path_masker.mask(file_path)
             if file_size > max_size_bytes:
                 files_skipped += 1
                 file_reports.append(
                     {
-                        "file_path": str(file_path),
+                        "file_path": output_file_path,
                         "status": "skipped",
                         "reason": (
                             "File larger than max_file_size_mb "
@@ -190,14 +208,19 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
                 )
                 continue
 
-            findings, error = scan_file(analyzer=analyzer, path=file_path, config=config)
+            findings, error = scan_file(
+                analyzer=analyzer,
+                path=file_path,
+                output_file_path=output_file_path,
+                config=config,
+            )
             files_scanned += 1
 
             if error:
                 files_failed += 1
                 file_reports.append(
                     {
-                        "file_path": str(file_path),
+                        "file_path": output_file_path,
                         "status": "failed",
                         "error": error,
                         "findings_count": 0,
@@ -208,7 +231,7 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
             all_findings.extend(findings)
             file_reports.append(
                 {
-                    "file_path": str(file_path),
+                    "file_path": output_file_path,
                     "status": "scanned",
                     "findings_count": len(findings),
                 }
@@ -218,7 +241,7 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
             files_failed += 1
             file_reports.append(
                 {
-                    "file_path": str(file_path),
+                    "file_path": file_path_masker.mask(file_path),
                     "status": "failed",
                     "error": str(exc),
                     "findings_count": 0,
@@ -263,6 +286,13 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
                 "entities": config["presidio"].get("entities", []),
             },
             "custom_recognizers": config["custom_recognizers"],
+            "rules": {
+                "region": rule_set.get("metadata", {}).get("region"),
+                "environment": rule_set.get("metadata", {}).get("environment"),
+                "files_loaded": rule_set.get("metadata", {}).get("files_loaded", []),
+                "include_entities": rule_set.get("include_entities", []),
+                "exclude_entities": rule_set.get("exclude_entities", []),
+            },
         },
         "stats": {
             "files_scanned": files_scanned,

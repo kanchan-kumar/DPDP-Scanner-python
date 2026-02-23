@@ -60,6 +60,23 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         default="INFO",
         help="Log verbosity (DEBUG, INFO, WARNING, ERROR).",
     )
+    parser.add_argument(
+        "--rules-env",
+        help=(
+            "Override rule environment for this run "
+            "(example: default, dev, qa, prod)."
+        ),
+    )
+    parser.add_argument(
+        "--mask-file-paths",
+        action="store_true",
+        help="Enable file path masking in output JSON.",
+    )
+    parser.add_argument(
+        "--file-path-mask-mode",
+        choices=["full", "basename", "relative", "hash", "redacted"],
+        help="File path masking mode for output JSON.",
+    )
     return parser.parse_args(argv)
 
 
@@ -90,10 +107,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 1
     logger.info("STEP_DONE: load_config")
 
+    config["_meta"] = {
+        "config_path": str(config_path.resolve()),
+        "config_dir": str(config_path.resolve().parent),
+    }
+
     if args.paths:
         config["scan"]["input_paths"] = args.paths
     if args.output:
         config["output"]["path"] = args.output
+    if args.rules_env:
+        config.setdefault("rule_engine", {})
+        config["rule_engine"]["environment"] = args.rules_env
+    if args.mask_file_paths:
+        config.setdefault("output", {})
+        config["output"]["mask_file_paths"] = True
+    if args.file_path_mask_mode:
+        config.setdefault("output", {})
+        config["output"]["file_path_mask_mode"] = args.file_path_mask_mode
 
     resolved_output_path = resolve_output_path(
         str(config["output"].get("path", "pii_output.json"))
