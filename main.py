@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import sys
 import warnings
+from multiprocessing import freeze_support
 from pathlib import Path
 from typing import Optional, Sequence
 
 MIN_SUPPORTED_PYTHON = (3, 10)
-MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 14)
+MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 11)
 
 
 def _ensure_src_on_path() -> None:
@@ -56,4 +57,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    # Required for PyInstaller multiprocessing child processes on frozen builds.
+    freeze_support()
     raise SystemExit(main())

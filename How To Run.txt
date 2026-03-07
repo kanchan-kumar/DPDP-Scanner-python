@@ -1,115 +1,207 @@
-DPDP Presidio Scanner - Run Guide
+DPDP Scanner - Unified Setup + Packaging
 
-1) Create and setup ONE virtual environment (.venv)
-# From project root:
-# Prefer Python 3.13 (or 3.12/3.11/3.10). Do NOT use Python 3.14+.
-python3.13 -m venv .venv
-# If python3.13 is not available, use python3.12/python3.11/python3.10.
+1) Build the scanner package
+Use `bootstrap_and_package.py` with `automation_runner_config.json`.
 
-# Activate (macOS/Linux):
+From project root:
+python3 bootstrap_and_package.py --config automation_runner_config.json
+
+Expected build outputs:
+- `dist/dpdp-pii-scanner/` (packaged folder)
+- `dist/dpdp-pii-scanner-<os>-<arch>.zip` (bundle)
+
+2) Run the scanner after successful build (recommended)
+Run from the project root using the launcher `./dpdp-scan`.
+
+macOS/Linux:
+./dpdp-scan --help
+
+Windows:
+cd dist\dpdp-pii-scanner
+dpdp-scan.cmd --help
+
+Run with packaged default config:
+- macOS/Linux (project root): `./dpdp-scan`
+- Windows: `dpdp-scan.cmd`
+
+Run with explicit config:
+- macOS/Linux: `./dpdp-scan --config ./scanner_config.json`
+- Windows: `dpdp-scan.cmd --config C:\full\path\scanner_config.json`
+
+Common runtime overrides:
+- Scan specific paths (repeatable):
+  `./dpdp-scan --path /data/files --path /extra/share`
+- Change output file:
+  `./dpdp-scan --output output/final_output.json`
+- Switch rules environment:
+  `./dpdp-scan --rules-env prod`
+- Mask file paths in output:
+  `./dpdp-scan --mask-file-paths --file-path-mask-mode hash`
+
+DPDP_MYSQL_PASSWORD='' ./dpdp-scan \
+  --config run_scanner_mysql_and_files.json \
+  --output output/output.json
+
+3) Run from source (alternative to packaged binary)
+Use the isolated virtual environment:
+
+macOS/Linux:
 source .venv/bin/activate
-
-# Activate (Windows PowerShell):
-# .venv\\Scripts\\Activate.ps1
-
-# Verify you are using .venv Python:
-python --version
-which python
-# Expected: Python 3.10, 3.11, 3.12, or 3.13
-
-# Install dependencies inside .venv:
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip check
-python -m spacy download en_core_web_lg
-
-2) Run from source (recommended while developing)
 python main.py --config scanner_config.json
 
-Example: scan a path and write to a JSON file
-python main.py --path /data/input --output /tmp/pii_report.json
+Windows:
+.venv\Scripts\activate
+python main.py --config scanner_config.json
 
-Example: pass output as a directory (auto-creates pii_output.json inside)
-python main.py --path /data/input --output /tmp/reports
-# output file becomes: /tmp/reports/pii_output.json
+4) All available scanner CLI options
+`main.py` / packaged `dpdp-scan` support:
 
-Rule environment examples (India rule profiles):
-# Use default rules from scanner config
-python main.py --config scanner_config.json --path /data/input --output /tmp/pii_report.json
+- `-h, --help`
+- `--config CONFIG`
+- `--init-config PATH`
+- `--path PATHS` (repeatable)
+- `--output OUTPUT`
+- `--log-level LOG_LEVEL` (`DEBUG|INFO|WARNING|ERROR`)
+- `--rules-env RULES_ENV` (for example `default|dev|qa|prod`)
+- `--mask-file-paths`
+- `--file-path-mask-mode {full,basename,relative,hash,redacted}`
 
-# Override via CLI for this run only
-python main.py --config scanner_config.json --rules-env prod --path /data/input --output /tmp/pii_report.json
+5) All available `scanner_config.json` options
+Top-level keys:
+- `scan`
+- `presidio`
+- `custom_recognizers`
+- `rule_engine`
+- `sources`
+- `output`
 
-# Override via environment variable
-DPDP_RULES_ENV=qa python main.py --config scanner_config.json --path /data/input --output /tmp/pii_report.json
+`scan`:
+- `input_paths`
+- `recursive`
+- `include_extensions`
+- `exclude_dirs`
+- `exclude_file_globs`
+- `max_file_size_mb`
+- `read_binary_files_as_text`
+- `pdf_max_pages`
+- `ocr_images`
 
-Optional file-path masking in JSON output
-# Enable masking with basename only
-python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode basename --path /data/input --output /tmp/pii_report.json
+`presidio`:
+- `language`
+- `supported_languages`
+- `nlp_engine_name`
+- `model_name`
+- `entities`
+- `score_threshold`
+- `entity_score_thresholds`
+- `return_decision_process`
+- `allow_list`
+- `allow_list_match`
+- `context_words`
+- `spacy_max_length`
+- `chunk_size_chars`
+- `chunk_overlap_chars`
+- `context_enhancer.enabled`
+- `context_enhancer.context_similarity_factor`
+- `context_enhancer.min_score_with_context_similarity`
+- `context_enhancer.context_prefix_count`
+- `context_enhancer.context_suffix_count`
 
-# Use relative paths from scan root
-python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode relative --path /data/input --output /tmp/pii_report.json
+`custom_recognizers`:
+- `enable_indian_identifiers`
+- `aadhaar_checksum_validation`
+- `upi_generic_pattern`
+- `upi_handle_domains`
 
-# Hash paths
-python main.py --config scanner_config.json --mask-file-paths --file-path-mask-mode hash --path /data/input --output /tmp/pii_report.json
+`rule_engine`:
+- `enabled`
+- `region`
+- `environment_variable`
+- `default_environment`
+- `environment`
+- `base_rules_file`
+- `environment_rules` (`default|dev|qa|prod`)
 
-3) Build standalone executable (Python + dependencies bundled)
-python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --zip
+`sources.enabled_sources`:
+- List of enabled source types: `filesystem`, `database`
 
-Build output (onedir):
-- dist/dpdp-pii-scanner/dpdp-pii-scanner
-- dist/dpdp-pii-scanner/dpdp-scan
-- dist/dpdp-pii-scanner/scanner_config.json
-- dist/dpdp-pii-scanner-<os>-<arch>.zip
+`sources.filesystem`:
+- `enabled`
+- `locations[]`
+- `locations[].name`
+- `locations[].enabled`
+- `locations[].provider`
+- `locations[].input_paths`
+- `locations[].recursive`
 
-4) Run executable on target machine (no Python install needed)
-./dpdp-scan --path /data/input --output /tmp/pii_report.json
+`sources.database`:
+- `enabled`
+- `scanner` (must be `piicatcher`)
+- `piicatcher.enabled`
+- `piicatcher.catalog_path`
+- `piicatcher.app_dir`
+- `piicatcher.secret`
+- `piicatcher.source_type`
+- `piicatcher.source_name`
+- `piicatcher.source_kwargs`
+- `piicatcher.add_source_function_candidates`
+- `connections[]`
+- `connections[].name`
+- `connections[].enabled`
+- `connections[].type` (`mysql|postgresql|mssql|oracle|dynamodb`)
+- `connections[].url`
+- `connections[].database`
+- `connections[].table_name` (for DynamoDB style source configs)
+- `connections[].include_tables`
+- `connections[].auth.username`
+- `connections[].auth.password`
+- `connections[].auth.password_env`
+- `connections[].auth.keytab_file`
+- `connections[].auth.kerberos_principal`
+- `connections[].auth.kerberos_realm`
+- `connections[].auth.aws_access_key_id_env`
+- `connections[].auth.aws_secret_access_key_env`
+- `connections[].auth.aws_session_token_env`
+- `connections[].auth.region_env`
+- `connections[].piicatcher.enabled`
+- `connections[].piicatcher.source_type`
+- `connections[].piicatcher.source_name`
+- `connections[].piicatcher.source_kwargs`
+- `connections[].piicatcher.add_source_function_candidates`
 
-Example: output directory mode
-./dpdp-scan --path /data/input --output /tmp/reports
-# output file becomes: /tmp/reports/pii_output.json
+`output`:
+- `path`
+- `pretty`
+- `include_text_snippet`
+- `snippet_context_chars`
+- `include_analysis_explanation`
+- `include_file_hash`
+- `include_source_metadata`
+- `mask_file_paths`
+- `file_path_mask_mode`
+- `file_path_base_dir`
+- `file_path_hash_salt`
 
-5) Override config per run
-./dpdp-scan --config /etc/dpdp/custom_config.json --path /data/input --output /tmp/report.json
+6) Runner config (`automation_runner_config.json`) summary
+Main keys:
+- `target_environment`: `auto|mac|linux|windows`
+- `python`
+- `environment`
+- `dependencies`
+- `database_test_data`
+- `packaging`
+- `runtime_smoke_test`
 
-Rule environment override with executable
-DPDP_RULES_ENV=prod ./dpdp-scan --path /data/input --output /tmp/report.json
-./dpdp-scan --rules-env qa --path /data/input --output /tmp/report.json
+Key behavior:
+- Keep `environment.clear=false` to reuse one isolated `.venv`.
+- Keep `environment.preserve_existing_venv_when_offline=true` for offline reuse.
+- `packaging.remove_incompatible_packages=true` removes known PyInstaller blockers
+  like `pathlib` before packaging.
 
-Mask file paths with executable
-./dpdp-scan --mask-file-paths --file-path-mask-mode hash --path /data/input --output /tmp/report.json
-
-6) Optional one-file binary build
-python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --onefile --zip
-
-Troubleshooting build failures
-- If `python -m spacy download en_core_web_lg` fails on Python 3.14+:
-  - Root cause: current spaCy/Presidio stack is not compatible with Python 3.14 yet.
-  - Fix: recreate `.venv` with Python 3.13 (or 3.12/3.11/3.10).
-- If build fails with `No module named macholib` or `No module named altgraph`, the virtual environment is incomplete or mixed.
-- Recreate `.venv` cleanly and reinstall:
-  rm -rf .venv
-  python3.13 -m venv .venv
-  source .venv/bin/activate
-  python -m pip install --upgrade pip
-  python -m pip install -r requirements.txt
-  python -m pip check
-  python -m spacy download en_core_web_lg
-- Then rerun:
-  python build_executable.py --name dpdp-pii-scanner --command-name dpdp-scan --zip
-
-Notes
-- Binary artifacts are OS/architecture specific. Build separately for macOS/Linux/Windows.
-- Default logs show progress steps only and do not print detected sensitive values.
-- OCR is disabled by default to avoid runtime dependency on external Tesseract.
-- If `--output` has no extension (for example `/tmp/reports`), it is treated as a directory target.
-- For higher precision tuning:
-  - Use `presidio.entities` to scan only required entity types.
-  - Use `presidio.entity_score_thresholds` to set stricter per-entity confidence.
-  - Use `presidio.chunk_size_chars` and `presidio.spacy_max_length` for large files.
-  - Keep `custom_recognizers.upi_generic_pattern=false` to avoid email-like UPI false positives.
-- Rule files live under `config/pii_rules/india/` and are loaded by `rule_engine` section in config.
-- Rule file structure reference: `config/pii_rules/india/README.md`.
-- File path masking modes:
-  - `full` (default), `basename`, `relative`, `hash`, `redacted`.
-- You can set masking in config (`output.mask_file_paths`, `output.file_path_mask_mode`) or override per run via CLI.
+7) Notes
+- DB scanning uses `https://github.com/tokern/piicatcher` only.
+- For RDS, configure connection `type` and `url` according to engine.
+- If a dbcat source method name differs in your environment, use
+  `add_source_function_candidates` at global or connection level.
+- First-time bootstrap requires internet access.
+- Offline runs work only with a pre-populated `.venv` and `environment.clear=false`.

@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
-from presidio_analyzer import RecognizerResult
+try:  # pragma: no cover - import is optional for database-only scans
+    from presidio_analyzer import RecognizerResult
+except Exception:  # pragma: no cover - fallback for environments without Presidio
+    class RecognizerResult:  # type: ignore[override]
+        RECOGNIZER_NAME_KEY = "recognizer_name"
 
 
 SENSITIVE_ENTITY_TYPES = {
@@ -62,6 +66,9 @@ def build_finding(
     file_path: str,
     file_hash: Optional[str],
     output_cfg: Dict[str, object],
+    source_type: Optional[str] = None,
+    source_plugin: Optional[str] = None,
+    source_metadata: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, object]:
     """Convert a Presidio result object into output JSON finding format."""
     matched_text = text[result.start : result.end]
@@ -78,6 +85,13 @@ def build_finding(
 
     if file_hash:
         finding["file_hash"] = file_hash
+
+    if source_type:
+        finding["source_type"] = source_type
+    if source_plugin:
+        finding["source_plugin"] = source_plugin
+    if source_metadata and output_cfg.get("include_source_metadata", True):
+        finding["source_metadata"] = source_metadata
 
     recognizer_name = ""
     if result.recognition_metadata:

@@ -1,0 +1,68 @@
+{
+  "rule_engine": {
+    "enabled": false
+  },
+  "sources": {
+    "enabled_sources": [
+      "database"
+    ],
+    "filesystem": {
+      "enabled": false,
+      "locations": []
+    },
+    "database": {
+      "enabled": true,
+      "scanner": "piicatcher",
+      "piicatcher": {
+        "enabled": true,
+        "catalog_path": ":memory:",
+        "app_dir": ".piicatcher",
+        "source_type": "mysql"
+      },
+      "connections": [
+        {
+          "name": "local_mysql_sample",
+          "enabled": true,
+          "type": "mysql",
+          "url": "mysql://root:@127.0.0.1:3306/dpdp_scanner_sample",
+          "database": "dpdp_scanner_sample",
+          "include_tables": [
+            "customers",
+            "payments",
+            "employee_profiles"
+          ],
+          "auth": {
+            "username": "root",
+            "password": "",
+            "password_env": "DPDP_DB_PASSWORD",
+            "keytab_file": "",
+            "kerberos_principal": ""
+          },
+          "piicatcher": {
+            "enabled": true,
+            "source_type": "mysql",
+            "source_name": "local_mysql_sample",
+            "source_kwargs": {
+              "uri": "127.0.0.1",
+              "port": 3306,
+              "username": "root",
+              "password": "",
+              "database": "dpdp_scanner_sample"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "scan": {
+    "input_paths": []
+  },
+  "output": {
+    "path": "output/output.json",
+    "pretty": true,
+    "include_source_metadata": true,
+    "include_text_snippet": false,
+    "include_analysis_explanation": false,
+    "include_file_hash": false
+  }
+}

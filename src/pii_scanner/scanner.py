@@ -7,23 +7,18 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from presidio_analyzer import AnalyzerEngine, RecognizerResult
-
-from .discovery import iter_candidate_files
-from .extractors import extract_text
-from .path_masking import build_file_path_masker
+from .plugins import RECORD_ERROR, RECORD_SKIP, RECORD_SOURCE, create_source_plugins
 from .postprocessing import apply_postprocessing
-from .recognizers import build_analyzer
 from .reporting import build_finding, deduplicate_results
 from .rules import apply_rule_set_to_config, load_effective_rule_set
-from .utils import sha256_file, utc_now
+from .utils import utc_now
 
 
 def _analyze_chunked(
-    analyzer: AnalyzerEngine,
+    analyzer: Any,
     text: str,
     presidio_cfg: Dict[str, Any],
-) -> List[RecognizerResult]:
+) -> List[Any]:
     """
     Analyze text in chunks to avoid spaCy max-length failures on large files.
     Offsets from each chunk are translated back to the original text positions.
@@ -54,7 +49,7 @@ def _analyze_chunked(
             allow_list_match=allow_list_match,
         )
 
-    merged_results: List[RecognizerResult] = []
+    merged_results: List[Any] = []
     start = 0
     while start < len(text):
         end = min(len(text), start + chunk_size)
@@ -82,25 +77,23 @@ def _analyze_chunked(
     return merged_results
 
 
-def scan_file(
-    analyzer: AnalyzerEngine,
-    path: Path,
-    output_file_path: str,
+def scan_text_source(
+    analyzer: Any,
+    source_path: str,
+    source_text: str,
+    content_hash: Optional[str],
+    source_type: str,
+    source_plugin: str,
     config: Dict[str, Any],
+    source_metadata: Optional[Dict[str, Any]] = None,
 ) -> Tuple[List[Dict[str, object]], Optional[str]]:
-    """Scan one file and return findings/error tuple."""
-    scan_cfg = config["scan"]
+    """Scan generic source text and return findings/error tuple."""
     presidio_cfg = config["presidio"]
     output_cfg = config["output"]
     rule_set = config.get("_resolved_rules", {}) or {}
     entity_rules = rule_set.get("entities", {}) or {}
 
-    try:
-        text = extract_text(path, scan_cfg)
-    except Exception as exc:
-        return [], str(exc)
-
-    if not text.strip():
+    if not source_text.strip():
         return [], None
 
     entities = presidio_cfg.get("entities") or None
@@ -108,17 +101,17 @@ def scan_file(
     try:
         results = _analyze_chunked(
             analyzer=analyzer,
-            text=text,
+            text=source_text,
             presidio_cfg=presidio_cfg,
         )
     except Exception as exc:
         return [], str(exc)
 
-    results = deduplicate_results(results, text)
+    results = deduplicate_results(results, source_text)
     thresholds = presidio_cfg.get("entity_score_thresholds", {}) or {}
     results = apply_postprocessing(
         results=results,
-        text=text,
+        text=source_text,
         entity_thresholds=thresholds,
         entity_rules=entity_rules,
     )
@@ -127,29 +120,109 @@ def scan_file(
         entity_filter = set(entities)
         results = [result for result in results if result.entity_type in entity_filter]
 
-    include_file_hash = bool(output_cfg.get("include_file_hash", True))
-    file_hash = sha256_file(path) if include_file_hash else None
-
     findings = [
         build_finding(
             result=result,
-            text=text,
-            file_path=output_file_path,
-            file_hash=file_hash,
+            text=source_text,
+            file_path=source_path,
+            file_hash=content_hash,
             output_cfg=output_cfg,
+            source_type=source_type,
+            source_plugin=source_plugin,
+            source_metadata=source_metadata,
         )
         for result in results
     ]
     return findings, None
 
 
+def _summarize_source_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    source_cfg = config.get("sources", {}) or {}
+    filesystem_cfg = source_cfg.get("filesystem", {}) or {}
+    database_cfg = source_cfg.get("database", {}) or {}
+
+    location_summaries: List[Dict[str, Any]] = []
+    for index, location in enumerate(filesystem_cfg.get("locations", []) or [], start=1):
+        if not isinstance(location, dict):
+            continue
+        location_summaries.append(
+            {
+                "name": str(location.get("name") or f"filesystem_{index}"),
+                "enabled": bool(location.get("enabled", True)),
+                "provider": str(location.get("provider") or "local"),
+                "path_count": len(location.get("input_paths", []) or []),
+            }
+        )
+
+    connection_summaries: List[Dict[str, Any]] = []
+    for index, connection in enumerate(database_cfg.get("connections", []) or [], start=1):
+        if not isinstance(connection, dict):
+            continue
+        connection_summaries.append(
+            {
+                "name": str(connection.get("name") or f"database_{index}"),
+                "enabled": bool(connection.get("enabled", True)),
+                "type": str(connection.get("type") or ""),
+                "piicatcher_enabled": bool(
+                    (connection.get("piicatcher", {}) or {}).get(
+                        "enabled",
+                        (database_cfg.get("piicatcher", {}) or {}).get("enabled", True),
+                    )
+                ),
+                "source_type": str(
+                    (connection.get("piicatcher", {}) or {}).get(
+                        "source_type",
+                        (database_cfg.get("piicatcher", {}) or {}).get("source_type", ""),
+                    )
+                ),
+                "tables": [
+                    item.get("name", "")
+                    if isinstance(item, dict)
+                    else str(item)
+                    for item in (
+                        connection.get("include_tables")
+                        or connection.get("tables", [])
+                        or []
+                    )
+                ],
+                "query_names": [
+                    item.get("name", "")
+                    if isinstance(item, dict)
+                    else ""
+                    for item in (connection.get("queries", []) or [])
+                ],
+            }
+        )
+
+    return {
+        "enabled_sources": source_cfg.get("enabled_sources", []),
+        "filesystem": {
+            "enabled": bool(filesystem_cfg.get("enabled", True)),
+            "location_count": len(location_summaries),
+            "locations": location_summaries,
+        },
+        "database": {
+            "enabled": bool(database_cfg.get("enabled", False)),
+            "scanner": "piicatcher",
+            "piicatcher": {
+                "enabled": bool(
+                    (database_cfg.get("piicatcher", {}) or {}).get("enabled", True)
+                ),
+                "source_type": str(
+                    (database_cfg.get("piicatcher", {}) or {}).get("source_type", "")
+                ),
+            },
+            "connection_count": len(connection_summaries),
+            "connections": connection_summaries,
+        },
+    }
+
+
 def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object]:
     """Execute full scan lifecycle and return report payload."""
     scan_cfg = config["scan"]
     output_cfg = config["output"]
-    output_path = Path(output_cfg.get("path", "pii_output.json")).resolve()
-    max_size_bytes = int(scan_cfg.get("max_file_size_mb", 20) * 1024 * 1024)
-    file_path_masker = build_file_path_masker(output_cfg, scan_cfg)
+    output_path = Path(output_cfg.get("path", "output/output.json")).resolve()
 
     logger.info("STEP_START: load_rules")
     rule_set = load_effective_rule_set(config)
@@ -161,105 +234,183 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
         len(rule_set.get("metadata", {}).get("files_loaded", []) or []),
     )
 
-    logger.info("STEP_START: build_analyzer")
-    analyzer = build_analyzer(config, logger)
-    logger.info("STEP_DONE: build_analyzer")
+    analyzer: Optional[Any] = None
 
-    logger.info("STEP_START: scan_files")
+    source_plugins = create_source_plugins(config, output_path, logger)
+    logger.info(
+        "STEP_START: scan_sources plugin_count=%d plugins=%s",
+        len(source_plugins),
+        ",".join(plugin.plugin_name for plugin in source_plugins),
+    )
+
     start_time = utc_now()
-    file_reports: List[Dict[str, object]] = []
+    source_reports: List[Dict[str, object]] = []
     all_findings: List[Dict[str, object]] = []
     files_scanned = 0
     files_skipped = 0
     files_failed = 0
+    plugin_stats: Dict[str, Dict[str, int]] = {}
+    source_index = 0
 
-    paths = scan_cfg.get("input_paths", ["."])
-    if isinstance(paths, str):
-        paths = [paths]
-
-    for index, file_path in enumerate(
-        iter_candidate_files(
-            input_paths=paths,
-            recursive=bool(scan_cfg.get("recursive", True)),
-            include_extensions=scan_cfg.get("include_extensions", []),
-            exclude_dirs=scan_cfg.get("exclude_dirs", []),
-            exclude_globs=scan_cfg.get("exclude_file_globs", []),
-        ),
-        start=1,
-    ):
+    for plugin in source_plugins:
+        plugin_stats.setdefault(
+            plugin.plugin_name,
+            {"sources_scanned": 0, "sources_skipped": 0, "sources_failed": 0, "findings": 0},
+        )
+        logger.info("STEP_START: plugin_scan name=%s", plugin.plugin_name)
         try:
-            resolved = file_path.resolve()
-            if resolved == output_path:
-                continue
-
-            file_size = file_path.stat().st_size
-            output_file_path = file_path_masker.mask(file_path)
-            if file_size > max_size_bytes:
-                files_skipped += 1
-                file_reports.append(
+            for record in plugin.iter_records():
+                source_index += 1
+                plugin_summary = plugin_stats.setdefault(
+                    record.plugin_name,
                     {
-                        "file_path": output_file_path,
-                        "status": "skipped",
-                        "reason": (
-                            "File larger than max_file_size_mb "
-                            f"({scan_cfg.get('max_file_size_mb')})"
-                        ),
-                    }
+                        "sources_scanned": 0,
+                        "sources_skipped": 0,
+                        "sources_failed": 0,
+                        "findings": 0,
+                    },
                 )
-                continue
+                source_metadata = dict(record.metadata or {})
+                source_metadata.pop("precomputed_findings", None)
 
-            findings, error = scan_file(
-                analyzer=analyzer,
-                path=file_path,
-                output_file_path=output_file_path,
-                config=config,
-            )
-            files_scanned += 1
+                if record.record_type == RECORD_SKIP:
+                    files_skipped += 1
+                    plugin_summary["sources_skipped"] += 1
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "skipped",
+                            "reason": record.reason,
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
+                    continue
 
-            if error:
-                files_failed += 1
-                file_reports.append(
-                    {
-                        "file_path": output_file_path,
-                        "status": "failed",
-                        "error": error,
-                        "findings_count": 0,
-                    }
+                if record.record_type == RECORD_ERROR:
+                    files_failed += 1
+                    plugin_summary["sources_failed"] += 1
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "failed",
+                            "error": record.reason,
+                            "findings_count": 0,
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
+                    continue
+
+                if record.record_type != RECORD_SOURCE:
+                    files_failed += 1
+                    plugin_summary["sources_failed"] += 1
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "failed",
+                            "error": f"Unknown source record type: {record.record_type}",
+                            "findings_count": 0,
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
+                    continue
+
+                if record.precomputed_findings:
+                    files_scanned += 1
+                    plugin_summary["sources_scanned"] += 1
+                    all_findings.extend(record.precomputed_findings)
+                    plugin_summary["findings"] += len(record.precomputed_findings)
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "scanned",
+                            "findings_count": len(record.precomputed_findings),
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
+                    continue
+
+                if analyzer is None:
+                    logger.info("STEP_START: build_analyzer")
+                    from .recognizers import build_analyzer
+
+                    analyzer = build_analyzer(config, logger)
+                    logger.info("STEP_DONE: build_analyzer")
+
+                findings, error = scan_text_source(
+                    analyzer=analyzer,
+                    source_path=record.source_path,
+                    source_text=record.text,
+                    content_hash=record.content_hash,
+                    source_type=record.source_type,
+                    source_plugin=record.plugin_name,
+                    config=config,
+                    source_metadata=source_metadata,
                 )
-                continue
+                files_scanned += 1
+                plugin_summary["sources_scanned"] += 1
 
-            all_findings.extend(findings)
-            file_reports.append(
-                {
-                    "file_path": output_file_path,
-                    "status": "scanned",
-                    "findings_count": len(findings),
-                }
-            )
+                if error:
+                    files_failed += 1
+                    plugin_summary["sources_failed"] += 1
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "failed",
+                            "error": error,
+                            "findings_count": 0,
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
+                else:
+                    all_findings.extend(findings)
+                    plugin_summary["findings"] += len(findings)
+                    source_reports.append(
+                        {
+                            "file_path": record.source_path,
+                            "status": "scanned",
+                            "findings_count": len(findings),
+                            "source_type": record.source_type,
+                            "source_plugin": record.plugin_name,
+                            "source_metadata": source_metadata,
+                        }
+                    )
 
+                if source_index % 25 == 0:
+                    logger.info(
+                        "STEP_PROGRESS: scan_sources scanned=%d skipped=%d failed=%d findings=%d",
+                        files_scanned,
+                        files_skipped,
+                        files_failed,
+                        len(all_findings),
+                    )
         except Exception as exc:
             files_failed += 1
-            file_reports.append(
+            plugin_stats[plugin.plugin_name]["sources_failed"] += 1
+            source_reports.append(
                 {
-                    "file_path": file_path_masker.mask(file_path),
+                    "file_path": f"{plugin.source_type}://{plugin.plugin_name}",
                     "status": "failed",
                     "error": str(exc),
                     "findings_count": 0,
+                    "source_type": plugin.source_type,
+                    "source_plugin": plugin.plugin_name,
                 }
             )
-
-        if index % 25 == 0:
-            logger.info(
-                "STEP_PROGRESS: scan_files scanned=%d skipped=%d failed=%d findings=%d",
-                files_scanned,
-                files_skipped,
-                files_failed,
-                len(all_findings),
-            )
+        logger.info("STEP_DONE: plugin_scan name=%s", plugin.plugin_name)
 
     end_time = utc_now()
     logger.info(
-        "STEP_DONE: scan_files scanned=%d skipped=%d failed=%d findings=%d",
+        "STEP_DONE: scan_sources scanned=%d skipped=%d failed=%d findings=%d",
         files_scanned,
         files_skipped,
         files_failed,
@@ -269,7 +420,7 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
     return {
         "scanner": {
             "name": "presidio-dpdp-scanner",
-            "version": "5.0.0",
+            "version": "5.3.0",
         },
         "scan_started_at": start_time,
         "scan_completed_at": end_time,
@@ -293,12 +444,17 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
                 "include_entities": rule_set.get("include_entities", []),
                 "exclude_entities": rule_set.get("exclude_entities", []),
             },
+            "sources": _summarize_source_config(config),
         },
         "stats": {
             "files_scanned": files_scanned,
             "files_skipped": files_skipped,
             "files_failed": files_failed,
+            "sources_scanned": files_scanned,
+            "sources_skipped": files_skipped,
+            "sources_failed": files_failed,
             "total_findings": len(all_findings),
+            "plugin_summary": plugin_stats,
         },
         "findings": sorted(
             all_findings,
@@ -309,5 +465,5 @@ def run_scan(config: Dict[str, Any], logger: logging.Logger) -> Dict[str, object
                 -item["score"],
             ),
         ),
-        "files": file_reports,
+        "files": source_reports,
     }

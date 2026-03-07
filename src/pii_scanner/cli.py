@@ -114,6 +114,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     if args.paths:
         config["scan"]["input_paths"] = args.paths
+        sources_cfg = config.get("sources", {}) or {}
+        filesystem_cfg = sources_cfg.get("filesystem", {}) or {}
+        locations = filesystem_cfg.get("locations", []) or []
+        for location in locations:
+            if isinstance(location, dict):
+                location["input_paths"] = list(args.paths)
     if args.output:
         config["output"]["path"] = args.output
     if args.rules_env:
@@ -127,7 +133,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         config["output"]["file_path_mask_mode"] = args.file_path_mask_mode
 
     resolved_output_path = resolve_output_path(
-        str(config["output"].get("path", "pii_output.json"))
+        str(config["output"].get("path", "output/output.json"))
     )
     config["output"]["path"] = str(resolved_output_path)
 

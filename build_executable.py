@@ -20,7 +20,7 @@ DEFAULT_CONFIG = ROOT / "scanner_config.json"
 SRC_ROOT = ROOT / "src"
 RULES_ROOT = ROOT / "config" / "pii_rules"
 MIN_SUPPORTED_PYTHON = (3, 10)
-MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 14)
+MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 11)
 REQUIRED_BUILD_MODULES = ["PyInstaller", "altgraph"]
 DARWIN_REQUIRED_BUILD_MODULES = ["macholib"]
 
@@ -102,6 +102,9 @@ def build_command(args: argparse.Namespace) -> List[str]:
 
     collect_candidates = [
         "pii_scanner",
+        "piicatcher",
+        "dbcat",
+        "pymysql",
         "presidio_analyzer",
         "presidio_anonymizer",
         "spacy",

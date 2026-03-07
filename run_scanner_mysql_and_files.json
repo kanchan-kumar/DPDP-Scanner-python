@@ -1,7 +1,7 @@
 {
   "scan": {
     "input_paths": [
-      "."
+      "test_data"
     ],
     "recursive": true,
     "include_extensions": [
@@ -123,24 +123,25 @@
   },
   "sources": {
     "enabled_sources": [
-      "filesystem"
+      "filesystem",
+      "database"
     ],
     "filesystem": {
       "enabled": true,
       "locations": [
         {
-          "name": "local_workspace",
+          "name": "local_test_data",
           "enabled": true,
           "provider": "local",
           "input_paths": [
-            "."
+            "test_data"
           ],
           "recursive": true
         }
       ]
     },
     "database": {
-      "enabled": false,
+      "enabled": true,
       "scanner": "piicatcher",
       "piicatcher": {
         "enabled": true,
@@ -155,7 +156,7 @@
       "connections": [
         {
           "name": "mysql_local_sample",
-          "enabled": false,
+          "enabled": true,
           "type": "mysql",
           "url": "mysql://root:@127.0.0.1:3306/dpdp_scanner_sample",
           "database": "dpdp_scanner_sample",

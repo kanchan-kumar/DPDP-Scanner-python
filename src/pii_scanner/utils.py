@@ -20,3 +20,7 @@ def sha256_file(path: Path) -> str:
             hasher.update(chunk)
     return hasher.hexdigest()
 
+
+def sha256_text(value: str) -> str:
+    """Compute SHA-256 hash of text for non-file source traceability."""
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()

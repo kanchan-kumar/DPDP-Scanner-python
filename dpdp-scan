@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PACKAGED_CMD="$SCRIPT_DIR/dist/dpdp-pii-scanner/dpdp-scan"
+
+if [[ ! -x "$PACKAGED_CMD" ]]; then
+  echo "Packaged scanner not found: $PACKAGED_CMD" >&2
+  echo "Run: python3 bootstrap_and_package.py --config automation_runner_config.json" >&2
+  exit 1
+fi
+
+exec "$PACKAGED_CMD" "$@"
