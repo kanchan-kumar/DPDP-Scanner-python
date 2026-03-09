@@ -21,6 +21,7 @@ set -euo pipefail
 #   DPDP_REPO_ROOT=/path/to/repo
 #   DPDP_VENV_DIR=/path/to/venv
 #   DPDP_PYTHON_BIN=python3.10
+#   DPDP_DBCAT_INSTALL_SPEC=dbcat==0.14.2
 #   DPDP_PIICATCHER_INSTALL_SPEC=git+https://github.com/tokern/piicatcher.git
 #   DPDP_SPACY_MODEL=en_core_web_lg
 #   DPDP_SKIP_SYSTEM_DEPS=0|1
@@ -57,6 +58,7 @@ mysql_root_exec() {
 REPO_ROOT="${DPDP_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 VENV_DIR="${DPDP_VENV_DIR:-$REPO_ROOT/.venv}"
 PYTHON_BIN="${DPDP_PYTHON_BIN:-python3.10}"
+DBCAT_INSTALL_SPEC="${DPDP_DBCAT_INSTALL_SPEC:-dbcat==0.14.2}"
 PIICATCHER_INSTALL_SPEC="${DPDP_PIICATCHER_INSTALL_SPEC:-git+https://github.com/tokern/piicatcher.git}"
 SPACY_MODEL="${DPDP_SPACY_MODEL:-en_core_web_lg}"
 SKIP_SYSTEM_DEPS="${DPDP_SKIP_SYSTEM_DEPS:-0}"
@@ -150,8 +152,12 @@ TMP_REQ="$(mktemp)"
 trap 'rm -f "$TMP_REQ"' EXIT
 
 log "Installing non-piicatcher requirements..."
-grep -Ev '^[[:space:]]*piicatcher([[:space:]]|@|=|$)' "$REPO_ROOT/requirements.txt" > "$TMP_REQ" || true
+grep -Ev '^[[:space:]]*(piicatcher|dbcat)([[:space:]]|@|=|$)' "$REPO_ROOT/requirements.txt" > "$TMP_REQ" || true
 "$VENV_PY" -m pip install --no-build-isolation --prefer-binary -r "$TMP_REQ"
+
+log "Installing dbcat with ignore-requires-python..."
+"$VENV_PY" -m pip install --no-build-isolation --prefer-binary --ignore-requires-python \
+  "$DBCAT_INSTALL_SPEC"
 
 log "Installing piicatcher with ignore-requires-python..."
 "$VENV_PY" -m pip install --no-build-isolation --prefer-binary --ignore-requires-python \
