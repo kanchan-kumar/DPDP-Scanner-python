@@ -40,6 +40,9 @@
       "cryptography<46"
     ],
     "ensure_pg_config": true,
+    "ensure_mysql_config": true,
+    "ensure_patchelf": true,
+    "ensure_linux_native_build_tools": true,
     "pg_config_bin_path": "",
     "ensure_macos_build_flags": true,
     "macos_formula_candidates": [

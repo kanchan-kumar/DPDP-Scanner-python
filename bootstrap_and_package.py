@@ -203,33 +203,80 @@ def find_compatible_python(
     return None
 
 
+def _with_optional_sudo(cmd: List[str]) -> List[str]:
+    if os.name != "posix":
+        return cmd
+    get_euid = getattr(os, "geteuid", None)
+    if callable(get_euid):
+        try:
+            if get_euid() == 0:
+                return cmd
+        except Exception:
+            pass
+    if command_exists("sudo"):
+        return ["sudo", *cmd]
+    return cmd
+
+
 def linux_python_install_steps(version: str) -> List[List[str]]:
     major_minor = version
 
     if command_exists("apt-get"):
         return [
-            ["sudo", "apt-get", "update"],
-            [
-                "sudo",
-                "apt-get",
-                "install",
-                "-y",
-                f"python{major_minor}",
-                f"python{major_minor}-venv",
-                f"python{major_minor}-distutils",
-            ],
+            _with_optional_sudo(["apt-get", "update"]),
+            _with_optional_sudo(
+                [
+                    "apt-get",
+                    "install",
+                    "-y",
+                    f"python{major_minor}",
+                    f"python{major_minor}-venv",
+                    f"python{major_minor}-distutils",
+                    f"python{major_minor}-dev",
+                ]
+            ),
+            _with_optional_sudo(
+                [
+                    "apt-get",
+                    "install",
+                    "-y",
+                    "python3",
+                    "python3-venv",
+                    "python3-dev",
+                ]
+            ),
         ]
     if command_exists("dnf"):
         return [
-            ["sudo", "dnf", "install", "-y", f"python{major_minor}"]
+            _with_optional_sudo(
+                [
+                    "dnf",
+                    "install",
+                    "-y",
+                    f"python{major_minor}",
+                    f"python{major_minor}-devel",
+                    "python3",
+                    "python3-devel",
+                ]
+            )
         ]
     if command_exists("yum"):
         return [
-            ["sudo", "yum", "install", "-y", f"python{major_minor}"]
+            _with_optional_sudo(
+                [
+                    "yum",
+                    "install",
+                    "-y",
+                    f"python{major_minor}",
+                    f"python{major_minor}-devel",
+                    "python3",
+                    "python3-devel",
+                ]
+            )
         ]
     if command_exists("pacman"):
         return [
-            ["sudo", "pacman", "-Sy", "--noconfirm", "python"]
+            _with_optional_sudo(["pacman", "-Sy", "--noconfirm", "python"])
         ]
     return []
 
@@ -770,28 +817,164 @@ def _configure_macos_build_env(env: Dict[str, str], dep_cfg: Dict[str, Any]) -> 
     return env
 
 
+def _has_mysql_config(path_value: Optional[str]) -> bool:
+    if shutil.which("mysql_config", path=path_value):
+        return True
+    if shutil.which("mariadb_config", path=path_value):
+        return True
+    return False
+
+
+def _linux_native_build_tools_install_steps() -> List[List[str]]:
+    if command_exists("apt-get"):
+        return [
+            _with_optional_sudo(["apt-get", "update"]),
+            _with_optional_sudo(
+                [
+                    "apt-get",
+                    "install",
+                    "-y",
+                    "build-essential",
+                    "pkg-config",
+                    "libpq-dev",
+                    "default-libmysqlclient-dev",
+                    "libssl-dev",
+                    "libffi-dev",
+                    "libxml2-dev",
+                    "libxslt1-dev",
+                    "zlib1g-dev",
+                    "libjpeg-dev",
+                    "patchelf",
+                    "binutils",
+                ]
+            ),
+            _with_optional_sudo(
+                [
+                    "apt-get",
+                    "install",
+                    "-y",
+                    "libmariadb-dev",
+                    "libmariadb-dev-compat",
+                ]
+            ),
+        ]
+    if command_exists("dnf"):
+        return [
+            _with_optional_sudo(
+                [
+                    "dnf",
+                    "install",
+                    "-y",
+                    "gcc",
+                    "gcc-c++",
+                    "make",
+                    "pkgconf-pkg-config",
+                    "postgresql-devel",
+                    "mariadb-connector-c-devel",
+                    "openssl-devel",
+                    "libffi-devel",
+                    "libxml2-devel",
+                    "libxslt-devel",
+                    "zlib-devel",
+                    "patchelf",
+                    "binutils",
+                ]
+            )
+        ]
+    if command_exists("yum"):
+        return [
+            _with_optional_sudo(
+                [
+                    "yum",
+                    "install",
+                    "-y",
+                    "gcc",
+                    "gcc-c++",
+                    "make",
+                    "pkgconfig",
+                    "postgresql-devel",
+                    "mariadb-connector-c-devel",
+                    "openssl-devel",
+                    "libffi-devel",
+                    "libxml2-devel",
+                    "libxslt-devel",
+                    "zlib-devel",
+                    "patchelf",
+                    "binutils",
+                ]
+            )
+        ]
+    if command_exists("pacman"):
+        return [
+            _with_optional_sudo(
+                [
+                    "pacman",
+                    "-Sy",
+                    "--noconfirm",
+                    "base-devel",
+                    "pkgconf",
+                    "postgresql-libs",
+                    "mariadb-libs",
+                    "openssl",
+                    "libffi",
+                    "libxml2",
+                    "libxslt",
+                    "zlib",
+                    "patchelf",
+                    "binutils",
+                ]
+            )
+        ]
+    return []
+
+
 def _linux_pg_config_install_steps() -> List[List[str]]:
     if command_exists("apt-get"):
         return [
-            ["sudo", "apt-get", "update"],
-            ["sudo", "apt-get", "install", "-y", "libpq-dev"],
+            _with_optional_sudo(["apt-get", "update"]),
+            _with_optional_sudo(["apt-get", "install", "-y", "libpq-dev"]),
         ]
     if command_exists("dnf"):
-        return [["sudo", "dnf", "install", "-y", "postgresql-devel"]]
+        return [_with_optional_sudo(["dnf", "install", "-y", "postgresql-devel"])]
     if command_exists("yum"):
-        return [["sudo", "yum", "install", "-y", "postgresql-devel"]]
+        return [_with_optional_sudo(["yum", "install", "-y", "postgresql-devel"])]
     if command_exists("pacman"):
-        return [["sudo", "pacman", "-Sy", "--noconfirm", "postgresql-libs"]]
+        return [_with_optional_sudo(["pacman", "-Sy", "--noconfirm", "postgresql-libs"])]
     return []
 
 
 def _ensure_pg_config_env(target_env: str, dep_cfg: Dict[str, Any]) -> Dict[str, str]:
     env = os.environ.copy()
-    if not bool(dep_cfg.get("ensure_pg_config", True)):
-        return env
 
     if target_env == "mac":
         env = _configure_macos_build_env(env, dep_cfg)
+
+    if target_env == "linux" and bool(dep_cfg.get("ensure_linux_native_build_tools", True)):
+        path_value = env.get("PATH")
+        need_pg = bool(dep_cfg.get("ensure_pg_config", True)) and not shutil.which(
+            "pg_config",
+            path=path_value,
+        )
+        need_mysql = bool(dep_cfg.get("ensure_mysql_config", True)) and not _has_mysql_config(
+            path_value
+        )
+        need_patchelf = bool(dep_cfg.get("ensure_patchelf", True)) and not shutil.which(
+            "patchelf",
+            path=path_value,
+        )
+        if need_pg or need_mysql or need_patchelf:
+            log(
+                "DEPS",
+                (
+                    "Installing Linux native build prerequisites "
+                    "(compiler, pg/mysql client headers, patchelf)."
+                ),
+            )
+            for step in _linux_native_build_tools_install_steps():
+                run_cmd(step, cwd=ROOT, check=False)
+
+    if not bool(dep_cfg.get("ensure_pg_config", True)):
+        return env
 
     custom_pg_bin = str(dep_cfg.get("pg_config_bin_path", "")).strip()
     if custom_pg_bin:
@@ -832,9 +1015,22 @@ def _ensure_pg_config_env(target_env: str, dep_cfg: Dict[str, Any]) -> Dict[str,
     if target_env == "linux":
         for step in _linux_pg_config_install_steps():
             run_cmd(step, cwd=ROOT, check=False)
-        if shutil.which("pg_config"):
+        if shutil.which("pg_config", path=env.get("PATH")):
             return env
         log("WARN", "pg_config still missing after linux install attempts.")
+        if bool(dep_cfg.get("ensure_mysql_config", True)) and not _has_mysql_config(env.get("PATH")):
+            log(
+                "WARN",
+                "mysql_config/mariadb_config is missing; mysqlclient-based builds may fail.",
+            )
+        if bool(dep_cfg.get("ensure_patchelf", True)) and not shutil.which(
+            "patchelf",
+            path=env.get("PATH"),
+        ):
+            log(
+                "WARN",
+                "patchelf is missing; PyInstaller linux bundling may fail.",
+            )
         return env
 
     if target_env == "windows":

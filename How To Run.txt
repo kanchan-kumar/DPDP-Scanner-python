@@ -38,7 +38,7 @@ Common runtime overrides:
 - Mask file paths in output:
   `./dpdp-scan --mask-file-paths --file-path-mask-mode hash`
 
-DPDP_MYSQL_PASSWORD='' ./dpdp-scan \
+DPDP_MYSQL_PASSWORD='' ./dist/dpdp-pii-scanner/dpdp-scan \
   --config run_scanner_mysql_and_files.json \
   --output output/output.json
 
