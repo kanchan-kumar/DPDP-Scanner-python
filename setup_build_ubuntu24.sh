@@ -12,7 +12,7 @@ set -euo pipefail
 # 6) Removes known PyInstaller blocker (pathlib backport)
 # 7) Builds executable + zip using build_executable.py
 # 8) Installs/configures MySQL sample data and runs scanner test
-#    using run_scanner_mysql_and_files.json (patched runtime copy)
+#    using the packaged launcher + run_scanner_mysql_and_files.json
 #
 # Usage:
 #   ./setup_build_ubuntu24.sh
@@ -29,10 +29,10 @@ set -euo pipefail
 #   DPDP_SKIP_MYSQL_TEST=0|1
 #   DPDP_MYSQL_TEST_HOST=127.0.0.1
 #   DPDP_MYSQL_TEST_PORT=3306
-#   DPDP_MYSQL_TEST_USER=dpdp_scanner
-#   DPDP_MYSQL_TEST_PASSWORD=dpdp_scanner
+#   DPDP_MYSQL_TEST_USER=root
+#   DPDP_MYSQL_TEST_PASSWORD=
 #   DPDP_MYSQL_TEST_CONFIG=run_scanner_mysql_and_files.json
-#   DPDP_MYSQL_TEST_OUTPUT=output/run_scanner_mysql_and_files_report.json
+#   DPDP_MYSQL_TEST_OUTPUT=output/output.json
 
 log() {
   printf '[setup-build] %s\n' "$*"
@@ -66,11 +66,10 @@ SKIP_SPACY_MODEL="${DPDP_SKIP_SPACY_MODEL:-0}"
 SKIP_MYSQL_TEST="${DPDP_SKIP_MYSQL_TEST:-0}"
 MYSQL_TEST_HOST="${DPDP_MYSQL_TEST_HOST:-127.0.0.1}"
 MYSQL_TEST_PORT="${DPDP_MYSQL_TEST_PORT:-3306}"
-MYSQL_TEST_USER="${DPDP_MYSQL_TEST_USER:-dpdp_scanner}"
-MYSQL_TEST_PASSWORD="${DPDP_MYSQL_TEST_PASSWORD:-dpdp_scanner}"
+MYSQL_TEST_USER="${DPDP_MYSQL_TEST_USER:-root}"
+MYSQL_TEST_PASSWORD="${DPDP_MYSQL_TEST_PASSWORD:-}"
 MYSQL_TEST_CONFIG="${DPDP_MYSQL_TEST_CONFIG:-$REPO_ROOT/run_scanner_mysql_and_files.json}"
-MYSQL_TEST_OUTPUT="${DPDP_MYSQL_TEST_OUTPUT:-$REPO_ROOT/output/run_scanner_mysql_and_files_report.json}"
-MYSQL_RUNTIME_CONFIG="$REPO_ROOT/output/run_scanner_mysql_and_files.runtime.json"
+MYSQL_TEST_OUTPUT="${DPDP_MYSQL_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
 
 [ -f "$REPO_ROOT/build_executable.py" ] || die "build_executable.py not found under REPO_ROOT=$REPO_ROOT"
 [ -f "$REPO_ROOT/requirements.txt" ] || die "requirements.txt not found under REPO_ROOT=$REPO_ROOT"
@@ -248,68 +247,14 @@ GRANT ALL PRIVILEGES ON dpdp_scanner_sample.* TO '${ESC_MYSQL_USER}'@'localhost'
 FLUSH PRIVILEGES;
 SQL
 
-  log "Preparing runtime test config from run_scanner_mysql_and_files.json..."
-  "$VENV_PY" - <<PY
-import json
-from pathlib import Path
-from urllib.parse import quote
-
-base_cfg = Path(r"$MYSQL_TEST_CONFIG")
-runtime_cfg = Path(r"$MYSQL_RUNTIME_CONFIG")
-output_file = Path(r"$MYSQL_TEST_OUTPUT")
-host = r"$MYSQL_TEST_HOST"
-port = int(r"$MYSQL_TEST_PORT")
-user = r"$MYSQL_TEST_USER"
-password = r"$MYSQL_TEST_PASSWORD"
-
-data = json.loads(base_cfg.read_text(encoding="utf-8"))
-sources = data.setdefault("sources", {})
-sources["enabled_sources"] = ["filesystem", "database"]
-sources.setdefault("database", {})["enabled"] = True
-
-for conn in sources.get("database", {}).get("connections", []) or []:
-    if str(conn.get("name", "")).strip() != "mysql_local_sample":
-        conn["enabled"] = False
-        continue
-
-    conn["enabled"] = True
-    conn["type"] = "mysql"
-    conn["url"] = (
-        f"mysql://{quote(user, safe='')}:{quote(password, safe='')}"
-        f"@{host}:{port}/dpdp_scanner_sample"
-    )
-    auth = conn.setdefault("auth", {})
-    auth["username"] = user
-    auth["password"] = ""
-    auth["password_env"] = "DPDP_MYSQL_PASSWORD"
-
-    piicatcher_cfg = conn.setdefault("piicatcher", {})
-    piicatcher_cfg["enabled"] = True
-    piicatcher_cfg["source_type"] = "mysql"
-    piicatcher_cfg["source_name"] = "mysql_local_sample"
-    piicatcher_cfg["source_kwargs"] = {
-        "uri": host,
-        "port": port,
-        "username": user,
-        "password": password,
-        "database": "dpdp_scanner_sample",
-    }
-
-output_cfg = data.setdefault("output", {})
-output_cfg["path"] = str(output_file)
-
-runtime_cfg.parent.mkdir(parents=True, exist_ok=True)
-runtime_cfg.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
-print(runtime_cfg)
-PY
-
-  log "Running MySQL + filesystem integration test scan..."
+  log "Running MySQL + filesystem integration test scan (packaged launcher)..."
   mkdir -p "$(dirname "$MYSQL_TEST_OUTPUT")"
-  DPDP_MYSQL_PASSWORD="$MYSQL_TEST_PASSWORD" \
-    "$VENV_PY" "$REPO_ROOT/main.py" \
-      --config "$MYSQL_RUNTIME_CONFIG" \
-      --output "$MYSQL_TEST_OUTPUT" \
-      --log-level INFO
+  (
+    cd "$REPO_ROOT"
+    DPDP_MYSQL_PASSWORD="$MYSQL_TEST_PASSWORD" ./dist/dpdp-pii-scanner/dpdp-scan \
+      --config "$MYSQL_TEST_CONFIG" \
+      --output "$MYSQL_TEST_OUTPUT"
+  )
 
   log "MySQL integration test report: $MYSQL_TEST_OUTPUT"
 fi
@@ -320,6 +265,5 @@ log "Artifacts:"
 log "  - $REPO_ROOT/dist/dpdp-pii-scanner"
 log "  - $REPO_ROOT/dist/dpdp-pii-scanner-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | tr '[:upper:]' '[:lower:]').zip"
 if [ "$SKIP_MYSQL_TEST" = "0" ]; then
-  log "  - $MYSQL_RUNTIME_CONFIG"
   log "  - $MYSQL_TEST_OUTPUT"
 fi
