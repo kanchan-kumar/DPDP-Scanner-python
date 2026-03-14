@@ -26,6 +26,8 @@ set -euo pipefail
 #   DPDP_SPACY_MODEL=en_core_web_lg
 #   DPDP_SKIP_SYSTEM_DEPS=0|1
 #   DPDP_SKIP_SPACY_MODEL=0|1
+#   DPDP_SKIP_MYSQL_SERVER=0|1
+#   DPDP_SKIP_POSTGRES_SERVER=0|1
 #   DPDP_SKIP_MYSQL_TEST=0|1
 #   DPDP_SKIP_POSTGRES_TEST=0|1
 #   DPDP_MYSQL_TEST_HOST=127.0.0.1
@@ -57,6 +59,16 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+stop_mysql_service() {
+  if command_exists systemctl; then
+    $SUDO systemctl stop mysql >/dev/null 2>&1 || true
+  fi
+  if command_exists service; then
+    $SUDO service mysql stop >/dev/null 2>&1 || true
+  fi
+  $SUDO pkill -f mysqld >/dev/null 2>&1 || true
+}
+
 mysql_root_exec() {
   if [ -n "${SUDO:-}" ]; then
     $SUDO mysql "$@"
@@ -85,6 +97,8 @@ PIICATCHER_INSTALL_SPEC="${DPDP_PIICATCHER_INSTALL_SPEC:-git+https://github.com/
 SPACY_MODEL="${DPDP_SPACY_MODEL:-en_core_web_lg}"
 SKIP_SYSTEM_DEPS="${DPDP_SKIP_SYSTEM_DEPS:-0}"
 SKIP_SPACY_MODEL="${DPDP_SKIP_SPACY_MODEL:-0}"
+SKIP_MYSQL_SERVER="${DPDP_SKIP_MYSQL_SERVER:-0}"
+SKIP_POSTGRES_SERVER="${DPDP_SKIP_POSTGRES_SERVER:-0}"
 SKIP_MYSQL_TEST="${DPDP_SKIP_MYSQL_TEST:-0}"
 SKIP_POSTGRES_TEST="${DPDP_SKIP_POSTGRES_TEST:-0}"
 MYSQL_TEST_HOST="${DPDP_MYSQL_TEST_HOST:-127.0.0.1}"
@@ -134,7 +148,7 @@ fi
 if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
   log "Installing base system dependencies..."
   $SUDO apt-get update -y
-  $SUDO apt-get install -y \
+  $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
     software-properties-common \
     ca-certificates \
     curl \
@@ -149,12 +163,29 @@ if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
     zlib1g-dev \
     libjpeg-dev \
     libpq-dev \
-    default-libmysqlclient-dev \
-    mysql-server \
-    mysql-client \
-    postgresql \
-    postgresql-client \
     tesseract-ocr
+
+  log "Installing database client libraries..."
+  $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    default-libmysqlclient-dev \
+    mysql-client \
+    postgresql-client
+
+  if [ "$SKIP_MYSQL_TEST" = "0" ] && [ "$SKIP_MYSQL_SERVER" = "0" ]; then
+    log "Installing MySQL server..."
+    stop_mysql_service
+    if ! $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server; then
+      log "MySQL server install failed; attempting dpkg recovery..."
+      stop_mysql_service
+      $SUDO dpkg --configure -a || true
+      $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+    fi
+  fi
+
+  if [ "$SKIP_POSTGRES_TEST" = "0" ] && [ "$SKIP_POSTGRES_SERVER" = "0" ]; then
+    log "Installing PostgreSQL server..."
+    $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql
+  fi
 fi
 
 if ! command_exists python3.10; then
