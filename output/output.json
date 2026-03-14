@@ -3,8 +3,8 @@
     "name": "presidio-dpdp-scanner",
     "version": "5.3.0"
   },
-  "scan_started_at": "2026-03-07T06:02:51.263572Z",
-  "scan_completed_at": "2026-03-07T06:03:48.579082Z",
+  "scan_started_at": "2026-03-09T16:07:33.566460Z",
+  "scan_completed_at": "2026-03-09T16:08:35.458382Z",
   "config": {
     "scan": {
       "input_paths": [
@@ -90,8 +90,8 @@
       "region": "india",
       "environment": "default",
       "files_loaded": [
-        "/PDP-Scanner/config/pii_rules/india/base_rules.json",
-        "/PDP-Scanner/config/pii_rules/india/default_rules.json"
+        "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/config/pii_rules/india/base_rules.json",
+        "/Users/kanchankumar/Documents/learning/PGP-Cloud/DPDP-Scanner/config/pii_rules/india/default_rules.json"
       ],
       "include_entities": [
         "IN_AADHAAR",
@@ -272,7 +272,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "aditi.verma@example.in",
+          "john.miller@example.org",
+          "rahul.sharma@example.com"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "aditi.verma@example.in"
       },
       "recognizer_name": "piicatcher"
     },
@@ -303,7 +311,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "Rahul Sharma",
+          "Aditi Verma",
+          "John Miller"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "Rahul Sharma"
       },
       "recognizer_name": "piicatcher"
     },
@@ -334,7 +350,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9876543210",
+          "+91-9123456789",
+          "+1-202-555-0186"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9876543210"
       },
       "recognizer_name": "piicatcher"
     },
@@ -365,7 +389,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "22, MG Road, Bengaluru",
+          "14, Park Street, Kolkata",
+          "500 Elm Street, Springfield"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "22, MG Road, Bengaluru"
       },
       "recognizer_name": "piicatcher"
     },
@@ -396,7 +428,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9000011111",
+          "+91-9888877777"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9000011111"
       },
       "recognizer_name": "piicatcher"
     },
@@ -427,7 +466,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "nitin.rao@company.com",
+          "sana.khan@company.com"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "nitin.rao@company.com"
       },
       "recognizer_name": "piicatcher"
     },
@@ -458,7 +504,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "Nitin Rao",
+          "Sana Khan"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "Nitin Rao"
       },
       "recognizer_name": "piicatcher"
     },
@@ -489,7 +542,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "10 Residency Road, Pune",
+          "44 Linking Road, Mumbai"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "10 Residency Road, Pune"
       },
       "recognizer_name": "piicatcher"
     },
@@ -520,7 +580,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "M1234567",
+          "L7654321"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "M1234567"
       },
       "recognizer_name": "piicatcher"
     },
@@ -551,7 +618,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "billing.rahul@example.com",
+          "billing.aditi@example.in"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "billing.rahul@example.com"
       },
       "recognizer_name": "piicatcher"
     },
@@ -582,7 +656,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9988776655",
+          "+91-9090909090"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9988776655"
       },
       "recognizer_name": "piicatcher"
     },
@@ -6761,7 +6842,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "Rahul Sharma",
+          "Aditi Verma",
+          "John Miller"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "Rahul Sharma"
       }
     },
     {
@@ -6787,7 +6876,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "aditi.verma@example.in",
+          "john.miller@example.org",
+          "rahul.sharma@example.com"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "aditi.verma@example.in"
       }
     },
     {
@@ -6813,7 +6910,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9876543210",
+          "+91-9123456789",
+          "+1-202-555-0186"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9876543210"
       }
     },
     {
@@ -6839,7 +6944,15 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "22, MG Road, Bengaluru",
+          "14, Park Street, Kolkata",
+          "500 Elm Street, Springfield"
+        ],
+        "sample_values_count": 3,
+        "sample_values_limit": 5,
+        "sample_value_preview": "22, MG Road, Bengaluru"
       }
     },
     {
@@ -6865,7 +6978,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "Nitin Rao",
+          "Sana Khan"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "Nitin Rao"
       }
     },
     {
@@ -6891,7 +7011,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "nitin.rao@company.com",
+          "sana.khan@company.com"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "nitin.rao@company.com"
       }
     },
     {
@@ -6917,7 +7044,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9000011111",
+          "+91-9888877777"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9000011111"
       }
     },
     {
@@ -6943,7 +7077,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "M1234567",
+          "L7654321"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "M1234567"
       }
     },
     {
@@ -6969,7 +7110,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "10 Residency Road, Pune",
+          "44 Linking Road, Mumbai"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "10 Residency Road, Pune"
       }
     },
     {
@@ -6995,7 +7143,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "billing.rahul@example.com",
+          "billing.aditi@example.in"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "billing.rahul@example.com"
       }
     },
     {
@@ -7021,7 +7176,14 @@
           "source_type": "mysql",
           "table_count": 3,
           "pii_column_count": 11
-        }
+        },
+        "sample_values": [
+          "+91-9988776655",
+          "+91-9090909090"
+        ],
+        "sample_values_count": 2,
+        "sample_values_limit": 5,
+        "sample_value_preview": "+91-9988776655"
       }
     }
   ]

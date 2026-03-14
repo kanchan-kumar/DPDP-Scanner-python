@@ -37,7 +37,7 @@ if [[ -f "$REQUIREMENTS_FILE" ]]; then
   rm -f "$TMP_REQ"
   "$VENV_DIR/bin/python" -m pip install --no-build-isolation --prefer-binary --ignore-requires-python "piicatcher @ $PIICATCHER_INSTALL_SPEC"
 else
-  "$VENV_DIR/bin/python" -m pip install --no-build-isolation pymysql
+  "$VENV_DIR/bin/python" -m pip install --no-build-isolation pymysql psycopg2-binary
   "$VENV_DIR/bin/python" -m pip install --no-build-isolation --prefer-binary --ignore-requires-python "piicatcher @ $PIICATCHER_INSTALL_SPEC"
 fi
 

@@ -11,8 +11,8 @@ set -euo pipefail
 # 5) Installs spaCy model (with fallback wheel URLs)
 # 6) Removes known PyInstaller blocker (pathlib backport)
 # 7) Builds executable + zip using build_executable.py
-# 8) Installs/configures MySQL sample data and runs scanner test
-#    using the packaged launcher + run_scanner_mysql_and_files.json
+# 8) Installs/configures MySQL + PostgreSQL sample data and runs scanner test
+#    using the packaged launcher + run_scanner_mysql_postgres_and_files.json
 #
 # Usage:
 #   ./setup_build_ubuntu24.sh
@@ -27,12 +27,22 @@ set -euo pipefail
 #   DPDP_SKIP_SYSTEM_DEPS=0|1
 #   DPDP_SKIP_SPACY_MODEL=0|1
 #   DPDP_SKIP_MYSQL_TEST=0|1
+#   DPDP_SKIP_POSTGRES_TEST=0|1
 #   DPDP_MYSQL_TEST_HOST=127.0.0.1
 #   DPDP_MYSQL_TEST_PORT=3306
 #   DPDP_MYSQL_TEST_USER=root
 #   DPDP_MYSQL_TEST_PASSWORD=
 #   DPDP_MYSQL_TEST_CONFIG=run_scanner_mysql_and_files.json
 #   DPDP_MYSQL_TEST_OUTPUT=output/output.json
+#   DPDP_POSTGRES_TEST_HOST=127.0.0.1
+#   DPDP_POSTGRES_TEST_PORT=5432
+#   DPDP_POSTGRES_TEST_USER=dpdp_scanner
+#   DPDP_POSTGRES_TEST_PASSWORD=dpdp_scanner
+#   DPDP_POSTGRES_TEST_DB=dpdp_scanner_sample
+#   DPDP_POSTGRES_TEST_CONFIG=test_data/database/postgresql/piicatcher_postgres_scanner_config.json
+#   DPDP_POSTGRES_TEST_OUTPUT=output/output.json
+#   DPDP_INTEGRATION_TEST_CONFIG=run_scanner_mysql_postgres_and_files.json
+#   DPDP_INTEGRATION_TEST_OUTPUT=output/output.json
 
 log() {
   printf '[setup-build] %s\n' "$*"
@@ -55,6 +65,18 @@ mysql_root_exec() {
   fi
 }
 
+postgres_admin_exec() {
+  if command_exists sudo; then
+    sudo -u postgres psql "$@"
+    return
+  fi
+  if command_exists runuser; then
+    runuser -u postgres -- psql "$@"
+    return
+  fi
+  die "sudo or runuser is required to execute psql as the postgres user."
+}
+
 REPO_ROOT="${DPDP_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 VENV_DIR="${DPDP_VENV_DIR:-$REPO_ROOT/.venv}"
 PYTHON_BIN="${DPDP_PYTHON_BIN:-python3.10}"
@@ -64,17 +86,33 @@ SPACY_MODEL="${DPDP_SPACY_MODEL:-en_core_web_lg}"
 SKIP_SYSTEM_DEPS="${DPDP_SKIP_SYSTEM_DEPS:-0}"
 SKIP_SPACY_MODEL="${DPDP_SKIP_SPACY_MODEL:-0}"
 SKIP_MYSQL_TEST="${DPDP_SKIP_MYSQL_TEST:-0}"
+SKIP_POSTGRES_TEST="${DPDP_SKIP_POSTGRES_TEST:-0}"
 MYSQL_TEST_HOST="${DPDP_MYSQL_TEST_HOST:-127.0.0.1}"
 MYSQL_TEST_PORT="${DPDP_MYSQL_TEST_PORT:-3306}"
 MYSQL_TEST_USER="${DPDP_MYSQL_TEST_USER:-root}"
 MYSQL_TEST_PASSWORD="${DPDP_MYSQL_TEST_PASSWORD:-}"
 MYSQL_TEST_CONFIG="${DPDP_MYSQL_TEST_CONFIG:-$REPO_ROOT/run_scanner_mysql_and_files.json}"
 MYSQL_TEST_OUTPUT="${DPDP_MYSQL_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
+POSTGRES_TEST_HOST="${DPDP_POSTGRES_TEST_HOST:-127.0.0.1}"
+POSTGRES_TEST_PORT="${DPDP_POSTGRES_TEST_PORT:-5432}"
+POSTGRES_TEST_USER="${DPDP_POSTGRES_TEST_USER:-dpdp_scanner}"
+POSTGRES_TEST_PASSWORD="${DPDP_POSTGRES_TEST_PASSWORD:-dpdp_scanner}"
+POSTGRES_TEST_DB="${DPDP_POSTGRES_TEST_DB:-dpdp_scanner_sample}"
+POSTGRES_TEST_CONFIG="${DPDP_POSTGRES_TEST_CONFIG:-$REPO_ROOT/test_data/database/postgresql/piicatcher_postgres_scanner_config.json}"
+POSTGRES_TEST_OUTPUT="${DPDP_POSTGRES_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
+INTEGRATION_TEST_CONFIG="${DPDP_INTEGRATION_TEST_CONFIG:-$REPO_ROOT/run_scanner_mysql_postgres_and_files.json}"
+INTEGRATION_TEST_OUTPUT="${DPDP_INTEGRATION_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
 
 [ -f "$REPO_ROOT/build_executable.py" ] || die "build_executable.py not found under REPO_ROOT=$REPO_ROOT"
 [ -f "$REPO_ROOT/requirements.txt" ] || die "requirements.txt not found under REPO_ROOT=$REPO_ROOT"
 if [ "$SKIP_MYSQL_TEST" = "0" ]; then
   [ -f "$MYSQL_TEST_CONFIG" ] || die "MySQL test config not found: $MYSQL_TEST_CONFIG"
+fi
+if [ "$SKIP_POSTGRES_TEST" = "0" ]; then
+  [ -f "$POSTGRES_TEST_CONFIG" ] || die "PostgreSQL test config not found: $POSTGRES_TEST_CONFIG"
+fi
+if [ "$SKIP_MYSQL_TEST" = "0" ] && [ "$SKIP_POSTGRES_TEST" = "0" ]; then
+  [ -f "$INTEGRATION_TEST_CONFIG" ] || die "Integration test config not found: $INTEGRATION_TEST_CONFIG"
 fi
 
 if [ -r /etc/os-release ]; then
@@ -114,6 +152,8 @@ if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
     default-libmysqlclient-dev \
     mysql-server \
     mysql-client \
+    postgresql \
+    postgresql-client \
     tesseract-ocr
 fi
 
@@ -212,6 +252,8 @@ if [ "$SKIP_MYSQL_TEST" = "0" ]; then
   command_exists mysql || die "mysql client not found. Install mysql-client or set DPDP_SKIP_MYSQL_TEST=1."
 
   log "Starting MySQL service..."
+  # Explicit Ubuntu step:
+  # sudo systemctl enable --now mysql
   if command_exists systemctl; then
     if ! $SUDO systemctl enable --now mysql; then
       log "systemctl start failed; trying service mysql start..."
@@ -247,16 +289,102 @@ GRANT ALL PRIVILEGES ON dpdp_scanner_sample.* TO '${ESC_MYSQL_USER}'@'localhost'
 FLUSH PRIVILEGES;
 SQL
 
-  log "Running MySQL + filesystem integration test scan (packaged launcher)..."
-  mkdir -p "$(dirname "$MYSQL_TEST_OUTPUT")"
+fi
+
+if [ "$SKIP_POSTGRES_TEST" = "0" ]; then
+  command_exists psql || die "psql client not found. Install postgresql-client or set DPDP_SKIP_POSTGRES_TEST=1."
+
+  log "Starting PostgreSQL service..."
+  # Explicit Ubuntu step:
+  # sudo systemctl enable --now postgresql
+  if command_exists systemctl; then
+    if ! $SUDO systemctl enable --now postgresql; then
+      log "systemctl start failed; trying service postgresql start..."
+      $SUDO service postgresql start
+    fi
+  else
+    $SUDO service postgresql start
+  fi
+
+  log "Waiting for PostgreSQL to become ready..."
+  POSTGRES_READY=0
+  if command_exists pg_isready; then
+    for _ in $(seq 1 30); do
+      if pg_isready -h "$POSTGRES_TEST_HOST" -p "$POSTGRES_TEST_PORT" >/dev/null 2>&1; then
+        POSTGRES_READY=1
+        break
+      fi
+      sleep 1
+    done
+  else
+    for _ in $(seq 1 30); do
+      if postgres_admin_exec -d postgres -tAc "SELECT 1;" >/dev/null 2>&1; then
+        POSTGRES_READY=1
+        break
+      fi
+      sleep 1
+    done
+  fi
+  [ "$POSTGRES_READY" -eq 1 ] || die "PostgreSQL is not ready."
+
+  ESC_POSTGRES_USER=${POSTGRES_TEST_USER//\'/\'\'}
+  ESC_POSTGRES_PASSWORD=${POSTGRES_TEST_PASSWORD//\'/\'\'}
+  ESC_POSTGRES_DB=${POSTGRES_TEST_DB//\'/\'\'}
+
+  log "Creating PostgreSQL user/database and grants..."
+  ROLE_EXISTS=$(postgres_admin_exec -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '${ESC_POSTGRES_USER}'" || true)
+  if [ "$ROLE_EXISTS" != "1" ]; then
+    postgres_admin_exec -d postgres -v ON_ERROR_STOP=1 -c "CREATE USER ${ESC_POSTGRES_USER} WITH PASSWORD '${ESC_POSTGRES_PASSWORD}';"
+  fi
+
+  DB_EXISTS=$(postgres_admin_exec -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '${ESC_POSTGRES_DB}'" || true)
+  if [ "$DB_EXISTS" != "1" ]; then
+    postgres_admin_exec -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE ${ESC_POSTGRES_DB};"
+  fi
+
+  postgres_admin_exec -d postgres -v ON_ERROR_STOP=1 -c "ALTER DATABASE ${ESC_POSTGRES_DB} OWNER TO ${ESC_POSTGRES_USER};"
+  postgres_admin_exec -d postgres -v ON_ERROR_STOP=1 -c "GRANT ALL PRIVILEGES ON DATABASE ${ESC_POSTGRES_DB} TO ${ESC_POSTGRES_USER};"
+
+  log "Seeding PostgreSQL sample schema/data..."
+  PGPASSWORD="$POSTGRES_TEST_PASSWORD" psql \\
+    -h "$POSTGRES_TEST_HOST" \\
+    -p "$POSTGRES_TEST_PORT" \\
+    -U "$POSTGRES_TEST_USER" \\
+    -d "$POSTGRES_TEST_DB" \\
+    -v ON_ERROR_STOP=1 \\
+    -f "$REPO_ROOT/test_data/database/postgresql/create_schema_and_seed.sql"
+fi
+
+SCAN_CONFIG=""
+SCAN_OUTPUT=""
+SCAN_LABEL=""
+if [ "$SKIP_MYSQL_TEST" = "0" ] && [ "$SKIP_POSTGRES_TEST" = "0" ]; then
+  SCAN_CONFIG="$INTEGRATION_TEST_CONFIG"
+  SCAN_OUTPUT="$INTEGRATION_TEST_OUTPUT"
+  SCAN_LABEL="MySQL + PostgreSQL + filesystem"
+elif [ "$SKIP_MYSQL_TEST" = "0" ]; then
+  SCAN_CONFIG="$MYSQL_TEST_CONFIG"
+  SCAN_OUTPUT="$MYSQL_TEST_OUTPUT"
+  SCAN_LABEL="MySQL + filesystem"
+elif [ "$SKIP_POSTGRES_TEST" = "0" ]; then
+  SCAN_CONFIG="$POSTGRES_TEST_CONFIG"
+  SCAN_OUTPUT="$POSTGRES_TEST_OUTPUT"
+  SCAN_LABEL="PostgreSQL"
+fi
+
+if [ -n "$SCAN_CONFIG" ]; then
+  log "Running ${SCAN_LABEL} integration test scan (packaged launcher)..."
+  mkdir -p "$(dirname "$SCAN_OUTPUT")"
   (
     cd "$REPO_ROOT"
-    DPDP_MYSQL_PASSWORD="$MYSQL_TEST_PASSWORD" ./dist/dpdp-pii-scanner/dpdp-scan \
-      --config "$MYSQL_TEST_CONFIG" \
-      --output "$MYSQL_TEST_OUTPUT"
+    DPDP_MYSQL_PASSWORD="$MYSQL_TEST_PASSWORD" \\
+      DPDP_POSTGRES_PASSWORD="$POSTGRES_TEST_PASSWORD" \\
+      ./dist/dpdp-pii-scanner/dpdp-scan \\
+        --config "$SCAN_CONFIG" \\
+        --output "$SCAN_OUTPUT"
   )
 
-  log "MySQL integration test report: $MYSQL_TEST_OUTPUT"
+  log "Integration test report: $SCAN_OUTPUT"
 fi
 
 log "Build complete."
@@ -264,6 +392,6 @@ log "Activate venv: source $VENV_DIR/bin/activate"
 log "Artifacts:"
 log "  - $REPO_ROOT/dist/dpdp-pii-scanner"
 log "  - $REPO_ROOT/dist/dpdp-pii-scanner-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | tr '[:upper:]' '[:lower:]').zip"
-if [ "$SKIP_MYSQL_TEST" = "0" ]; then
-  log "  - $MYSQL_TEST_OUTPUT"
+if [ -n "$SCAN_OUTPUT" ]; then
+  log "  - $SCAN_OUTPUT"
 fi
