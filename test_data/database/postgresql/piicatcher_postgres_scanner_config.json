@@ -1,0 +1,60 @@
+{
+  "rule_engine": {
+    "enabled": false
+  },
+  "sources": {
+    "enabled_sources": [
+      "database"
+    ],
+    "filesystem": {
+      "enabled": false,
+      "locations": []
+    },
+    "database": {
+      "enabled": true,
+      "scanner": "piicatcher",
+      "piicatcher": {
+        "enabled": true,
+        "catalog_path": ":memory:",
+        "app_dir": ".piicatcher",
+        "source_type": "postgresql"
+      },
+      "connections": [
+        {
+          "name": "local_postgres_sample",
+          "enabled": true,
+          "type": "postgresql",
+          "url": "postgresql://dpdp_scanner:${DPDP_POSTGRES_PASSWORD}@127.0.0.1:5432/dpdp_scanner_sample",
+          "database": "dpdp_scanner_sample",
+          "include_tables": [
+            "customers",
+            "payments",
+            "employee_profiles"
+          ],
+          "auth": {
+            "username": "dpdp_scanner",
+            "password_env": "DPDP_POSTGRES_PASSWORD",
+            "keytab_file": "",
+            "kerberos_principal": ""
+          },
+          "piicatcher": {
+            "enabled": true,
+            "source_type": "postgresql",
+            "source_name": "local_postgres_sample"
+          }
+        }
+      ]
+    }
+  },
+  "scan": {
+    "input_paths": []
+  },
+  "output": {
+    "path": "output/output.json",
+    "pretty": true,
+    "include_source_metadata": true,
+    "include_text_snippet": false,
+    "include_analysis_explanation": false,
+    "include_file_hash": false
+  }
+}
