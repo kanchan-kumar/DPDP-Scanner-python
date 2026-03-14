@@ -59,6 +59,14 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+apt_get() {
+  if [ -n "${SUDO:-}" ]; then
+    $SUDO env DEBIAN_FRONTEND=noninteractive apt-get "$@"
+  else
+    DEBIAN_FRONTEND=noninteractive apt-get "$@"
+  fi
+}
+
 stop_mysql_service() {
   if command_exists systemctl; then
     $SUDO systemctl stop mysql >/dev/null 2>&1 || true
@@ -147,8 +155,8 @@ fi
 
 if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
   log "Installing base system dependencies..."
-  $SUDO apt-get update -y
-  $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  apt_get update -y
+  apt_get install -y \
     software-properties-common \
     ca-certificates \
     curl \
@@ -166,7 +174,7 @@ if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
     tesseract-ocr
 
   log "Installing database client libraries..."
-  $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  apt_get install -y \
     default-libmysqlclient-dev \
     mysql-client \
     postgresql-client
@@ -174,17 +182,17 @@ if [ "$SKIP_SYSTEM_DEPS" = "0" ]; then
   if [ "$SKIP_MYSQL_TEST" = "0" ] && [ "$SKIP_MYSQL_SERVER" = "0" ]; then
     log "Installing MySQL server..."
     stop_mysql_service
-    if ! $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server; then
+    if ! apt_get install -y mysql-server; then
       log "MySQL server install failed; attempting dpkg recovery..."
       stop_mysql_service
       $SUDO dpkg --configure -a || true
-      $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
+      apt_get install -y mysql-server
     fi
   fi
 
   if [ "$SKIP_POSTGRES_TEST" = "0" ] && [ "$SKIP_POSTGRES_SERVER" = "0" ]; then
     log "Installing PostgreSQL server..."
-    $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y postgresql
+    apt_get install -y postgresql
   fi
 fi
 
@@ -194,10 +202,10 @@ if ! command_exists python3.10; then
   fi
   log "python3.10 not found. Adding deadsnakes PPA..."
   $SUDO add-apt-repository -y ppa:deadsnakes/ppa
-  $SUDO apt-get update -y
-  if ! $SUDO apt-get install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils; then
+  apt_get update -y
+  if ! apt_get install -y python3.10 python3.10-venv python3.10-dev python3.10-distutils; then
     log "python3.10-distutils not available; retrying without it..."
-    $SUDO apt-get install -y python3.10 python3.10-venv python3.10-dev
+    apt_get install -y python3.10 python3.10-venv python3.10-dev
   fi
 fi
 
