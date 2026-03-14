@@ -45,6 +45,8 @@ SCAN_DEFAULTS: Dict[str, Any] = {
     "ocr_images": False,
 }
 
+DATABASE_PROFILE_DEFAULT_DIR = "config/databases"
+
 
 def _default_filesystem_location() -> Dict[str, Any]:
     return {
@@ -141,6 +143,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "database": {
             "enabled": False,
             "scanner": "piicatcher",
+            "profile_dir": DATABASE_PROFILE_DEFAULT_DIR,
+            "profiles": [],
+            "profile_paths": [],
+            "include_all_tables": True,
+            "include_all_databases": True,
+            "exclude_databases": [],
             "piicatcher": {
                 "enabled": True,
                 "catalog_path": ":memory:",
@@ -212,13 +220,34 @@ def write_json_file(path: Path, data: Dict[str, Any], pretty: bool = True) -> No
 
 def write_default_config(config_path: Path) -> None:
     """Write a starter config file to disk."""
-    write_json_file(config_path, DEFAULT_CONFIG, pretty=True)
+    config_dir = config_path.expanduser().resolve().parent
+    data = deepcopy(DEFAULT_CONFIG)
+    if config_dir.name == "scanner" and config_dir.parent.name == "config":
+        data["sources"]["database"]["profile_dir"] = "../databases"
+    write_json_file(config_path, data, pretty=True)
 
 
 def _as_dict(value: Any) -> Dict[str, Any]:
     if isinstance(value, dict):
         return value
     return {}
+
+
+def _as_str(value: Any) -> str:
+    return str(value).strip() if value is not None else ""
+
+
+def _as_bool(value: Any, default: bool) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    text = _as_str(value).lower()
+    if text in {"1", "true", "yes", "y", "on"}:
+        return True
+    if text in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
 
 
 def _as_str_list(value: Any) -> List[str]:
@@ -308,6 +337,18 @@ def _normalize_database_sources(sources_cfg: Dict[str, Any]) -> Dict[str, Any]:
     )
     database_cfg["enabled"] = bool(database_cfg.get("enabled", False))
     database_cfg["scanner"] = "piicatcher"
+    database_cfg["profile_dir"] = _as_str(
+        database_cfg.get("profile_dir") or DATABASE_PROFILE_DEFAULT_DIR
+    )
+    database_cfg["profiles"] = _as_str_list(database_cfg.get("profiles"))
+    database_cfg["profile_paths"] = _as_str_list(database_cfg.get("profile_paths"))
+    database_cfg["include_all_tables"] = _as_bool(
+        database_cfg.get("include_all_tables"), True
+    )
+    database_cfg["include_all_databases"] = _as_bool(
+        database_cfg.get("include_all_databases"), True
+    )
+    database_cfg["exclude_databases"] = _as_str_list(database_cfg.get("exclude_databases"))
     database_cfg["piicatcher"] = deep_merge(
         DEFAULT_CONFIG["sources"]["database"]["piicatcher"],
         _as_dict(database_cfg.get("piicatcher")),
@@ -325,10 +366,201 @@ def _normalize_database_sources(sources_cfg: Dict[str, Any]) -> Dict[str, Any]:
             connection["enabled"] = bool(connection.get("enabled", True))
             connection["auth"] = _as_dict(connection.get("auth"))
             connection["piicatcher"] = _as_dict(connection.get("piicatcher"))
+            if "include_all_tables" in connection:
+                connection["include_all_tables"] = _as_bool(
+                    connection.get("include_all_tables"),
+                    bool(database_cfg.get("include_all_tables", True)),
+                )
+            if "include_all_databases" in connection:
+                connection["include_all_databases"] = _as_bool(
+                    connection.get("include_all_databases"),
+                    bool(database_cfg.get("include_all_databases", True)),
+                )
+            if "exclude_databases" in connection:
+                connection["exclude_databases"] = _as_str_list(
+                    connection.get("exclude_databases")
+                )
             normalized_connections.append(connection)
         database_cfg["connections"] = normalized_connections
 
     return database_cfg
+
+
+def _resolve_config_dir(config_path: Optional[Path], config: Dict[str, Any]) -> Path:
+    if config_path is not None:
+        return config_path.expanduser().resolve().parent
+    meta_dir = _as_str(_as_dict(config.get("_meta")).get("config_dir"))
+    if meta_dir:
+        return Path(meta_dir).expanduser().resolve()
+    return Path.cwd().resolve()
+
+
+def _resolve_database_profile_dir(
+    database_cfg: Dict[str, Any],
+    config_dir: Path,
+    override_dir: Optional[str] = None,
+) -> Path:
+    raw_dir = _as_str(override_dir or database_cfg.get("profile_dir") or DATABASE_PROFILE_DEFAULT_DIR)
+    if not raw_dir:
+        raw_dir = DATABASE_PROFILE_DEFAULT_DIR
+    path = Path(raw_dir).expanduser()
+    if not path.is_absolute():
+        path = (config_dir / path).resolve()
+    return path
+
+
+def _extract_database_profile(payload: Any, source_path: Path) -> Dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise ValueError(f"Database profile {source_path} must contain a JSON object.")
+
+    if isinstance(payload.get("database"), dict):
+        return payload["database"]
+
+    sources_cfg = payload.get("sources")
+    if isinstance(sources_cfg, dict) and isinstance(sources_cfg.get("database"), dict):
+        return sources_cfg["database"]
+
+    if any(key in payload for key in ("connections", "piicatcher", "scanner", "sample_values")):
+        return payload
+
+    raise ValueError(
+        f"Database profile {source_path} is missing a 'database' section."
+    )
+
+
+def _merge_database_configs(base: Dict[str, Any], extra: Dict[str, Any]) -> Dict[str, Any]:
+    excluded_keys = {
+        "connections",
+        "enabled",
+        "profile_dir",
+        "profiles",
+        "profile_paths",
+        "profiles_resolved",
+    }
+    merged = deep_merge(
+        base,
+        {key: value for key, value in extra.items() if key not in excluded_keys},
+    )
+
+    base_connections = base.get("connections")
+    extra_connections = extra.get("connections")
+    merged_connections: List[Dict[str, Any]] = []
+    if isinstance(base_connections, list):
+        merged_connections.extend(
+            [item for item in base_connections if isinstance(item, dict)]
+        )
+    if isinstance(extra_connections, list):
+        merged_connections.extend(
+            [item for item in extra_connections if isinstance(item, dict)]
+        )
+    if merged_connections:
+        merged["connections"] = merged_connections
+    return merged
+
+
+def _resolve_profile_path(
+    item: str,
+    *,
+    profile_dir: Path,
+    config_dir: Path,
+) -> Optional[Path]:
+    raw_item = _as_str(item)
+    if not raw_item:
+        return None
+
+    candidate = Path(raw_item).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+
+    if "/" in raw_item or "\\" in raw_item:
+        candidate_config = (config_dir / candidate).resolve()
+        if candidate_config.exists():
+            return candidate_config
+        return (profile_dir / candidate).resolve()
+
+    if candidate.suffix.lower() == ".json":
+        return (profile_dir / candidate).resolve()
+
+    candidate = (profile_dir / candidate)
+    if candidate.suffix.lower() != ".json":
+        candidate = candidate.with_suffix(".json")
+    return candidate.resolve()
+
+
+def apply_database_profiles(
+    config: Dict[str, Any],
+    config_path: Optional[Path],
+    *,
+    override_profiles: Optional[List[str]] = None,
+    override_profile_dir: Optional[str] = None,
+    override_profile_paths: Optional[List[str]] = None,
+) -> List[Path]:
+    """
+    Load database profiles from disk and merge their settings into sources.database.
+    Returns resolved profile paths that were successfully applied.
+    """
+    sources_cfg = _as_dict(config.get("sources"))
+    database_cfg = _as_dict(sources_cfg.get("database"))
+
+    config_dir = _resolve_config_dir(config_path, config)
+    profile_dir = _resolve_database_profile_dir(
+        database_cfg, config_dir, override_dir=override_profile_dir
+    )
+
+    profiles = (
+        _as_str_list(override_profiles)
+        if override_profiles is not None
+        else _as_str_list(database_cfg.get("profiles"))
+    )
+    profile_paths = (
+        _as_str_list(override_profile_paths)
+        if override_profile_paths is not None
+        else _as_str_list(database_cfg.get("profile_paths"))
+    )
+    if override_profiles is not None:
+        database_cfg["profiles"] = profiles
+    if override_profile_paths is not None:
+        database_cfg["profile_paths"] = profile_paths
+
+    resolved_paths: List[Path] = []
+    seen_paths: set[str] = set()
+    for item in [*profiles, *profile_paths]:
+        profile_path = _resolve_profile_path(
+            item,
+            profile_dir=profile_dir,
+            config_dir=config_dir,
+        )
+        if profile_path is None:
+            continue
+        profile_key = str(profile_path)
+        if profile_key in seen_paths:
+            continue
+        if not profile_path.exists():
+            raise FileNotFoundError(
+                f"Database profile not found: {profile_path}"
+            )
+
+        profile_payload = expand_env_values(read_json_file(profile_path))
+        profile_cfg = _extract_database_profile(profile_payload, profile_path)
+        database_cfg = _merge_database_configs(database_cfg, profile_cfg)
+        resolved_paths.append(profile_path)
+        seen_paths.add(profile_key)
+
+    if resolved_paths:
+        database_cfg["profiles_resolved"] = [str(path) for path in resolved_paths]
+    database_cfg["profile_dir"] = str(profile_dir)
+
+    sources_cfg["database"] = database_cfg
+    config["sources"] = sources_cfg
+    return resolved_paths
+
+
+def refresh_database_sources(config: Dict[str, Any]) -> None:
+    """Re-normalize database sources after runtime overrides or profile merges."""
+    sources_cfg = _as_dict(config.get("sources"))
+    sources_cfg["database"] = _normalize_database_sources(sources_cfg)
+    sources_cfg["enabled_sources"] = _normalize_enabled_sources(sources_cfg)
+    config["sources"] = sources_cfg
 
 
 def _normalize_enabled_sources(sources_cfg: Dict[str, Any]) -> List[str]:
@@ -385,8 +617,10 @@ def resolve_config_path(cli_config: Optional[str]) -> Path:
     """
     Resolve configuration path with the following precedence:
     1) --config path passed by user
-    2) scanner_config.json in current working directory
-    3) scanner_config.json or <executable>_config.json next to executable/script
+    2) config/scanner/<name>.json under current working directory
+    3) <name>.json in current working directory
+    4) config/scanner/<name>.json next to executable/script
+    5) <name>.json next to executable/script
     """
     if cli_config:
         return Path(cli_config).expanduser()
@@ -414,11 +648,14 @@ def resolve_config_path(cli_config: Optional[str]) -> Path:
 
     for directory in deduped_dirs:
         for name in candidate_names:
+            nested = directory / "config" / "scanner" / name
+            if nested.exists():
+                return nested
             candidate = directory / name
             if candidate.exists():
                 return candidate
 
-    return Path("scanner_config.json")
+    return Path("config/scanner/scanner_config.json")
 
 
 def resolve_output_path(output_value: str, default_filename: str = "output.json") -> Path:

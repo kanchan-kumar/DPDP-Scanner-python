@@ -25,8 +25,12 @@ Run with packaged default config:
 - Windows: `dpdp-scan.cmd`
 
 Run with explicit config:
-- macOS/Linux: `./dpdp-scan --config ./scanner_config.json`
-- Windows: `dpdp-scan.cmd --config C:\full\path\scanner_config.json`
+- macOS/Linux: `./dpdp-scan --config ./config/scanner/scanner_config.json`
+- Windows: `dpdp-scan.cmd --config C:\full\path\config\scanner\scanner_config.json`
+
+Scanner configs live in `config/scanner/` (for example `scanner_config.json`,
+`run_scanner_mysql_and_files.json`, `run_scanner_mysql_postgres_and_files.json`,
+`run_scanner_mysql_local.json`, `run_scanner_postgres_local.json`).
 
 Common runtime overrides:
 - Scan specific paths (repeatable):
@@ -37,25 +41,39 @@ Common runtime overrides:
   `./dpdp-scan --rules-env prod`
 - Mask file paths in output:
   `./dpdp-scan --mask-file-paths --file-path-mask-mode hash`
+- Enable database scanning with a profile:
+  `./dpdp-scan --enable-db --db mysql_local`
+- Override database profile directory:
+  `./dpdp-scan --enable-db --db mysql_local --db-config-dir /path/to/db_profiles`
 
 DPDP_MYSQL_PASSWORD='' ./dist/dpdp-pii-scanner/dpdp-scan \
-  --config run_scanner_mysql_and_files.json \
+  --config config/scanner/run_scanner_mysql_and_files.json \
   --output output/output.json
 
 DPDP_MYSQL_PASSWORD='' DPDP_POSTGRES_PASSWORD='dpdp_scanner' ./dist/dpdp-pii-scanner/dpdp-scan \
-  --config run_scanner_mysql_postgres_and_files.json \
+  --config config/scanner/run_scanner_mysql_postgres_and_files.json \
   --output output/output.json
+
+DB-only runs with local sample configs:
+DPDP_MYSQL_PASSWORD='' ./dist/dpdp-pii-scanner/dpdp-scan \
+  --config config/scanner/run_scanner_mysql_local.json
+
+DPDP_POSTGRES_PASSWORD='dpdp_scanner' ./dist/dpdp-pii-scanner/dpdp-scan \
+  --config config/scanner/run_scanner_postgres_local.json
+
+Local sample DB setup helper (optional install + seed):
+./test_data/database/setup_local_databases.sh --install
 
 3) Run from source (alternative to packaged binary)
 Use the isolated virtual environment:
 
 macOS/Linux:
 source .venv/bin/activate
-python main.py --config scanner_config.json
+python main.py --config config/scanner/scanner_config.json
 
 Windows:
 .venv\Scripts\activate
-python main.py --config scanner_config.json
+python main.py --config config/scanner/scanner_config.json
 
 4) All available scanner CLI options
 `main.py` / packaged `dpdp-scan` support:
@@ -69,8 +87,11 @@ python main.py --config scanner_config.json
 - `--rules-env RULES_ENV` (for example `default|dev|qa|prod`)
 - `--mask-file-paths`
 - `--file-path-mask-mode {full,basename,relative,hash,redacted}`
+- `--enable-db`
+- `--db, --db-profile` (repeatable; profile name or JSON path)
+- `--db-config-dir`
 
-5) All available `scanner_config.json` options
+5) All available `config/scanner/scanner_config.json` options
 Top-level keys:
 - `scan`
 - `presidio`
@@ -141,6 +162,12 @@ Top-level keys:
 `sources.database`:
 - `enabled`
 - `scanner` (must be `piicatcher`)
+- `profile_dir` (directory containing profile JSON files)
+- `profiles` (list of profile names to load)
+- `profile_paths` (list of explicit profile JSON paths)
+- `include_all_tables`
+- `include_all_databases`
+- `exclude_databases`
 - `piicatcher.enabled`
 - `piicatcher.catalog_path`
 - `piicatcher.app_dir`
@@ -157,6 +184,10 @@ Top-level keys:
 - `connections[].database`
 - `connections[].table_name` (for DynamoDB style source configs)
 - `connections[].include_tables`
+- `connections[].include_databases`
+- `connections[].exclude_databases`
+- `connections[].include_all_tables`
+- `connections[].include_all_databases`
 - `connections[].auth.username`
 - `connections[].auth.password`
 - `connections[].auth.password_env`
@@ -204,6 +235,8 @@ Key behavior:
 
 7) Notes
 - DB scanning uses `https://github.com/tokern/piicatcher` only.
+- Database profiles live under `config/databases`; load them with `--db` or
+  `sources.database.profiles`.
 - For RDS, configure connection `type` and `url` according to engine.
 - If a dbcat source method name differs in your environment, use
   `add_source_function_candidates` at global or connection level.

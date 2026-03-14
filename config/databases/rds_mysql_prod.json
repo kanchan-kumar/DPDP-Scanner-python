@@ -1,0 +1,29 @@
+{
+  "name": "rds_mysql_prod",
+  "description": "AWS RDS MySQL example profile.",
+  "labels": ["cloud", "aws", "rds", "mysql"],
+  "database": {
+    "connections": [
+      {
+        "name": "rds_mysql_prod",
+        "enabled": false,
+        "type": "mysql",
+        "url": "mysql://scanner_user:${DPDP_RDS_MYSQL_PASSWORD}@rds-mysql-prod.abcdef.us-east-1.rds.amazonaws.com:3306/customer_db",
+        "database": "customer_db",
+        "include_tables": [
+          "customer_profile",
+          "payment_cards"
+        ],
+        "auth": {
+          "username": "scanner_user",
+          "password_env": "DPDP_RDS_MYSQL_PASSWORD"
+        },
+        "piicatcher": {
+          "enabled": true,
+          "source_type": "mysql",
+          "source_name": "rds_mysql_prod"
+        }
+      }
+    ]
+  }
+}

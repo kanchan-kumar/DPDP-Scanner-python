@@ -16,9 +16,10 @@ from typing import List, Optional
 
 ROOT = Path(__file__).resolve().parent
 ENTRYPOINT = ROOT / "main.py"
-DEFAULT_CONFIG = ROOT / "scanner_config.json"
+DEFAULT_CONFIG = ROOT / "config" / "scanner" / "scanner_config.json"
 SRC_ROOT = ROOT / "src"
 RULES_ROOT = ROOT / "config" / "pii_rules"
+DB_PROFILE_ROOT = ROOT / "config" / "databases"
 MIN_SUPPORTED_PYTHON = (3, 10)
 MAX_SUPPORTED_PYTHON_EXCLUSIVE = (3, 11)
 REQUIRED_BUILD_MODULES = ["PyInstaller", "altgraph"]
@@ -96,9 +97,11 @@ def build_command(args: argparse.Namespace) -> List[str]:
     cmd.append("--onefile" if args.onefile else "--onedir")
 
     if DEFAULT_CONFIG.exists():
-        cmd.extend(["--add-data", f"{DEFAULT_CONFIG}{os.pathsep}."])
+        cmd.extend(["--add-data", f"{DEFAULT_CONFIG}{os.pathsep}config/scanner"])
     if RULES_ROOT.exists():
         cmd.extend(["--add-data", f"{RULES_ROOT}{os.pathsep}config/pii_rules"])
+    if DB_PROFILE_ROOT.exists():
+        cmd.extend(["--add-data", f"{DB_PROFILE_ROOT}{os.pathsep}config/databases"])
 
     collect_candidates = [
         "pii_scanner",
@@ -149,7 +152,7 @@ def post_build_config_copy(args: argparse.Namespace) -> Optional[Path]:
     if not DEFAULT_CONFIG.exists():
         return None
 
-    target = output_root(args) / packaged_config_name(args)
+    target = output_root(args) / "config" / "scanner" / packaged_config_name(args)
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(DEFAULT_CONFIG, target)
     print(f"Config file copied to: {target}")
@@ -165,6 +168,18 @@ def post_build_rules_copy(args: argparse.Namespace) -> Optional[Path]:
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(RULES_ROOT, target)
     print(f"Rule directory copied to: {target}")
+    return target
+
+
+def post_build_database_profiles_copy(args: argparse.Namespace) -> Optional[Path]:
+    if not DB_PROFILE_ROOT.exists():
+        return None
+    target = output_root(args) / "config" / "databases"
+    if target.exists():
+        shutil.rmtree(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(DB_PROFILE_ROOT, target)
+    print(f"Database profile directory copied to: {target}")
     return target
 
 
@@ -188,7 +203,7 @@ def create_command_launchers(args: argparse.Namespace) -> None:
                 "set -eu",
                 'SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"',
                 f'BIN="$SCRIPT_DIR/{binary_name}"',
-                f'CONFIG="$SCRIPT_DIR/{config_name}"',
+                f'CONFIG="$SCRIPT_DIR/config/scanner/{config_name}"',
                 'if [ ! -f "$BIN" ]; then',
                 f'  echo "Executable not found: {binary_name}" >&2',
                 "  exit 1",
@@ -215,7 +230,7 @@ def create_command_launchers(args: argparse.Namespace) -> None:
                 "setlocal",
                 "set SCRIPT_DIR=%~dp0",
                 f"set BIN=%SCRIPT_DIR%{binary_name}",
-                f"set CONFIG=%SCRIPT_DIR%{config_name}",
+                f"set CONFIG=%SCRIPT_DIR%config\\scanner\\{config_name}",
                 "if exist \"%CONFIG%\" (",
                 "  \"%BIN%\" --config \"%CONFIG%\" %*",
                 ") else (",
@@ -251,7 +266,6 @@ def create_zip_package(args: argparse.Namespace) -> Optional[Path]:
 
         file_candidates = [
             packaged_binary_path(args),
-            output_root(args) / packaged_config_name(args),
             output_root(args) / args.command_name,
             output_root(args) / f"{args.command_name}.cmd",
         ]
@@ -367,6 +381,7 @@ def main() -> int:
         subprocess.run(cmd, check=True, env=env)
         post_build_config_copy(args)
         post_build_rules_copy(args)
+        post_build_database_profiles_copy(args)
         create_command_launchers(args)
         if args.zip:
             create_zip_package(args)

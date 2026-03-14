@@ -12,10 +12,10 @@ set -euo pipefail
 # 6) Removes known PyInstaller blocker (pathlib backport)
 # 7) Builds executable + zip using build_executable.py
 # 8) Installs/configures MySQL + PostgreSQL sample data and runs scanner test
-#    using the packaged launcher + run_scanner_mysql_postgres_and_files.json
+#    using the packaged launcher + config/scanner/run_scanner_mysql_postgres_and_files.json
 #
 # Usage:
-#   ./setup_build_ubuntu24.sh
+#   ./config/os/setup_build_ubuntu24.sh
 #
 # Optional env vars:
 #   DPDP_REPO_ROOT=/path/to/repo
@@ -32,7 +32,7 @@ set -euo pipefail
 #   DPDP_MYSQL_TEST_PORT=3306
 #   DPDP_MYSQL_TEST_USER=root
 #   DPDP_MYSQL_TEST_PASSWORD=
-#   DPDP_MYSQL_TEST_CONFIG=run_scanner_mysql_and_files.json
+#   DPDP_MYSQL_TEST_CONFIG=config/scanner/run_scanner_mysql_and_files.json
 #   DPDP_MYSQL_TEST_OUTPUT=output/output.json
 #   DPDP_POSTGRES_TEST_HOST=127.0.0.1
 #   DPDP_POSTGRES_TEST_PORT=5432
@@ -41,7 +41,7 @@ set -euo pipefail
 #   DPDP_POSTGRES_TEST_DB=dpdp_scanner_sample
 #   DPDP_POSTGRES_TEST_CONFIG=test_data/database/postgresql/piicatcher_postgres_scanner_config.json
 #   DPDP_POSTGRES_TEST_OUTPUT=output/output.json
-#   DPDP_INTEGRATION_TEST_CONFIG=run_scanner_mysql_postgres_and_files.json
+#   DPDP_INTEGRATION_TEST_CONFIG=config/scanner/run_scanner_mysql_postgres_and_files.json
 #   DPDP_INTEGRATION_TEST_OUTPUT=output/output.json
 
 log() {
@@ -77,7 +77,7 @@ postgres_admin_exec() {
   die "sudo or runuser is required to execute psql as the postgres user."
 }
 
-REPO_ROOT="${DPDP_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+REPO_ROOT="${DPDP_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 VENV_DIR="${DPDP_VENV_DIR:-$REPO_ROOT/.venv}"
 PYTHON_BIN="${DPDP_PYTHON_BIN:-python3.10}"
 DBCAT_INSTALL_SPEC="${DPDP_DBCAT_INSTALL_SPEC:-dbcat==0.14.2}"
@@ -91,7 +91,7 @@ MYSQL_TEST_HOST="${DPDP_MYSQL_TEST_HOST:-127.0.0.1}"
 MYSQL_TEST_PORT="${DPDP_MYSQL_TEST_PORT:-3306}"
 MYSQL_TEST_USER="${DPDP_MYSQL_TEST_USER:-root}"
 MYSQL_TEST_PASSWORD="${DPDP_MYSQL_TEST_PASSWORD:-}"
-MYSQL_TEST_CONFIG="${DPDP_MYSQL_TEST_CONFIG:-$REPO_ROOT/run_scanner_mysql_and_files.json}"
+MYSQL_TEST_CONFIG="${DPDP_MYSQL_TEST_CONFIG:-$REPO_ROOT/config/scanner/run_scanner_mysql_and_files.json}"
 MYSQL_TEST_OUTPUT="${DPDP_MYSQL_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
 POSTGRES_TEST_HOST="${DPDP_POSTGRES_TEST_HOST:-127.0.0.1}"
 POSTGRES_TEST_PORT="${DPDP_POSTGRES_TEST_PORT:-5432}"
@@ -100,7 +100,7 @@ POSTGRES_TEST_PASSWORD="${DPDP_POSTGRES_TEST_PASSWORD:-dpdp_scanner}"
 POSTGRES_TEST_DB="${DPDP_POSTGRES_TEST_DB:-dpdp_scanner_sample}"
 POSTGRES_TEST_CONFIG="${DPDP_POSTGRES_TEST_CONFIG:-$REPO_ROOT/test_data/database/postgresql/piicatcher_postgres_scanner_config.json}"
 POSTGRES_TEST_OUTPUT="${DPDP_POSTGRES_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
-INTEGRATION_TEST_CONFIG="${DPDP_INTEGRATION_TEST_CONFIG:-$REPO_ROOT/run_scanner_mysql_postgres_and_files.json}"
+INTEGRATION_TEST_CONFIG="${DPDP_INTEGRATION_TEST_CONFIG:-$REPO_ROOT/config/scanner/run_scanner_mysql_postgres_and_files.json}"
 INTEGRATION_TEST_OUTPUT="${DPDP_INTEGRATION_TEST_OUTPUT:-$REPO_ROOT/output/output.json}"
 
 [ -f "$REPO_ROOT/build_executable.py" ] || die "build_executable.py not found under REPO_ROOT=$REPO_ROOT"

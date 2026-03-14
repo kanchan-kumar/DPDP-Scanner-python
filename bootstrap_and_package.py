@@ -1219,7 +1219,7 @@ def maybe_smoke_test(venv_python: Path, smoke_cfg: Dict[str, Any]) -> None:
     if not bool(smoke_cfg.get("enabled", False)):
         return
 
-    scan_config = ROOT / str(smoke_cfg.get("config_file", "scanner_config.json"))
+    scan_config = ROOT / str(smoke_cfg.get("config_file", "config/scanner/scanner_config.json"))
     output_file = ROOT / str(smoke_cfg.get("output_file", "output/output.json"))
 
     run_cmd(

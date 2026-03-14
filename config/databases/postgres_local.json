@@ -1,0 +1,30 @@
+{
+  "name": "postgres_local",
+  "description": "Local PostgreSQL sample for dpdp_scanner_sample.",
+  "labels": ["local", "postgresql"],
+  "database": {
+    "connections": [
+      {
+        "name": "postgres_local_sample",
+        "enabled": true,
+        "type": "postgresql",
+        "url": "postgresql://dpdp_scanner:${DPDP_POSTGRES_PASSWORD}@127.0.0.1:5432/dpdp_scanner_sample",
+        "database": "dpdp_scanner_sample",
+        "include_tables": [
+          "customers",
+          "payments",
+          "employee_profiles"
+        ],
+        "auth": {
+          "username": "dpdp_scanner",
+          "password_env": "DPDP_POSTGRES_PASSWORD"
+        },
+        "piicatcher": {
+          "enabled": true,
+          "source_type": "postgresql",
+          "source_name": "postgres_local_sample"
+        }
+      }
+    ]
+  }
+}

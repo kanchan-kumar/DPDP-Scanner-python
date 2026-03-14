@@ -88,7 +88,7 @@
   },
   "runtime_smoke_test": {
     "enabled": false,
-    "config_file": "scanner_config.json",
+    "config_file": "config/scanner/scanner_config.json",
     "output_file": "output/output.json"
   }
 }

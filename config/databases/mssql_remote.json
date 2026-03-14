@@ -1,0 +1,34 @@
+{
+  "name": "mssql_remote",
+  "description": "Remote Microsoft SQL Server sample.",
+  "labels": ["remote", "mssql"],
+  "database": {
+    "connections": [
+      {
+        "name": "mssql_remote",
+        "enabled": false,
+        "type": "mssql",
+        "url": "mssql://scanner_user:${DPDP_MSSQL_PASSWORD}@sqlserver.example.com:1433/customer_db",
+        "database": "customer_db",
+        "include_tables": [
+          "customer_master"
+        ],
+        "auth": {
+          "username": "scanner_user",
+          "password_env": "DPDP_MSSQL_PASSWORD",
+          "keytab_file": "",
+          "kerberos_principal": ""
+        },
+        "piicatcher": {
+          "enabled": true,
+          "source_type": "mssql",
+          "source_name": "mssql_remote",
+          "add_source_function_candidates": [
+            "add_mssql_source",
+            "add_sqlserver_source"
+          ]
+        }
+      }
+    ]
+  }
+}

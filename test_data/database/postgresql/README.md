@@ -58,6 +58,12 @@ cd test_data/database/postgresql
 ./setup_postgres_sample.sh
 ```
 
+Or from the repo root:
+
+```bash
+./test_data/database/setup_local_databases.sh --postgres
+```
+
 Optional connection variables:
 
 ```bash

@@ -58,6 +58,12 @@ cd test_data/database/mysql
 ./setup_mysql_sample.sh
 ```
 
+Or from the repo root:
+
+```bash
+./test_data/database/setup_local_databases.sh --mysql
+```
+
 Optional connection variables:
 
 ```bash

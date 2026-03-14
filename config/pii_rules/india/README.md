@@ -33,12 +33,12 @@ Environment is selected in this order:
 
 Example:
 ```bash
-DPDP_RULES_ENV=prod python main.py --config scanner_config.json --path ./test_data --output /tmp/pii_report.json
+DPDP_RULES_ENV=prod python main.py --config config/scanner/scanner_config.json --path ./test_data --output /tmp/pii_report.json
 ```
 
 Or with CLI override:
 ```bash
-python main.py --config scanner_config.json --rules-env qa --path ./test_data --output /tmp/pii_report.json
+python main.py --config config/scanner/scanner_config.json --rules-env qa --path ./test_data --output /tmp/pii_report.json
 ```
 
 ## Extending Rules

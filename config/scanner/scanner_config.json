@@ -1,0 +1,177 @@
+{
+  "scan": {
+    "input_paths": [
+      "."
+    ],
+    "recursive": true,
+    "include_extensions": [
+      ".txt",
+      ".csv",
+      ".json",
+      ".log",
+      ".md",
+      ".xml",
+      ".yaml",
+      ".yml",
+      ".pdf",
+      ".docx",
+      ".png",
+      ".jpg",
+      ".jpeg"
+    ],
+    "exclude_dirs": [
+      ".git",
+      ".idea",
+      ".venv",
+      "venv",
+      "__pycache__",
+      "node_modules",
+      "dist",
+      "build"
+    ],
+    "exclude_file_globs": [
+      "*.pyc",
+      "*.pyo",
+      "*.DS_Store"
+    ],
+    "max_file_size_mb": 20,
+    "read_binary_files_as_text": false,
+    "pdf_max_pages": 50,
+    "ocr_images": false
+  },
+  "presidio": {
+    "language": "en",
+    "supported_languages": [
+      "en"
+    ],
+    "nlp_engine_name": "spacy",
+    "model_name": "en_core_web_lg",
+    "entities": [
+      "IN_AADHAAR",
+      "IN_PAN",
+      "IN_IFSC",
+      "IN_UPI_ID",
+      "IN_PASSPORT",
+      "IN_BANK_ACCOUNT",
+      "EMAIL_ADDRESS",
+      "PHONE_NUMBER",
+      "PERSON",
+      "LOCATION",
+      "IN_ADDRESS",
+      "CREDIT_CARD",
+      "IBAN_CODE",
+      "IP_ADDRESS"
+    ],
+    "score_threshold": 0.35,
+    "entity_score_thresholds": {
+      "PERSON": 0.6,
+      "LOCATION": 0.55,
+      "PHONE_NUMBER": 0.55,
+      "EMAIL_ADDRESS": 0.6,
+      "IN_BANK_ACCOUNT": 0.45
+    },
+    "return_decision_process": false,
+    "allow_list": [],
+    "allow_list_match": "exact",
+    "context_words": [
+      "customer",
+      "identity",
+      "bank",
+      "payment",
+      "contact"
+    ],
+    "spacy_max_length": 3000000,
+    "chunk_size_chars": 200000,
+    "chunk_overlap_chars": 500,
+    "context_enhancer": {
+      "enabled": true,
+      "context_similarity_factor": 0.35,
+      "min_score_with_context_similarity": 0.45,
+      "context_prefix_count": 8,
+      "context_suffix_count": 2
+    }
+  },
+  "custom_recognizers": {
+    "enable_indian_identifiers": true,
+    "aadhaar_checksum_validation": true,
+    "upi_generic_pattern": false,
+    "upi_handle_domains": [
+      "upi",
+      "ybl",
+      "ibl",
+      "axl",
+      "paytm",
+      "okhdfcbank",
+      "okicici",
+      "oksbi",
+      "okaxis"
+    ]
+  },
+  "rule_engine": {
+    "enabled": true,
+    "region": "india",
+    "environment_variable": "DPDP_RULES_ENV",
+    "default_environment": "default",
+    "environment": "default",
+    "base_rules_file": "config/pii_rules/india/base_rules.json",
+    "environment_rules": {
+      "default": "config/pii_rules/india/default_rules.json",
+      "dev": "config/pii_rules/india/dev_rules.json",
+      "qa": "config/pii_rules/india/qa_rules.json",
+      "prod": "config/pii_rules/india/prod_rules.json"
+    }
+  },
+  "sources": {
+    "enabled_sources": [
+      "filesystem"
+    ],
+    "filesystem": {
+      "enabled": true,
+      "locations": [
+        {
+          "name": "local_workspace",
+          "enabled": true,
+          "provider": "local",
+          "input_paths": [
+            "."
+          ],
+          "recursive": true
+        }
+      ]
+    },
+    "database": {
+      "enabled": false,
+      "scanner": "piicatcher",
+      "profile_dir": "../databases",
+      "profiles": [],
+      "profile_paths": [],
+      "include_all_tables": true,
+      "include_all_databases": true,
+      "exclude_databases": [],
+      "piicatcher": {
+        "enabled": true,
+        "catalog_path": ":memory:",
+        "app_dir": ".piicatcher",
+        "secret": "",
+        "source_type": "",
+        "source_name": "",
+        "source_kwargs": {},
+        "add_source_function_candidates": []
+      },
+      "connections": []
+    }
+  },
+  "output": {
+    "path": "output/output.json",
+    "pretty": true,
+    "include_text_snippet": true,
+    "snippet_context_chars": 24,
+    "include_analysis_explanation": false,
+    "include_file_hash": true,
+    "include_source_metadata": true,
+    "mask_file_paths": false,
+    "file_path_mask_mode": "full",
+    "file_path_base_dir": "",
+    "file_path_hash_salt": ""
+  }
+}

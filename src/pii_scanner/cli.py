@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 from .config import (
+    apply_database_profiles,
+    refresh_database_sources,
     load_config,
     resolve_config_path,
     resolve_output_path,
@@ -77,6 +79,25 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         choices=["full", "basename", "relative", "hash", "redacted"],
         help="File path masking mode for output JSON.",
     )
+    parser.add_argument(
+        "--enable-db",
+        action="store_true",
+        help="Enable database scanning for this run.",
+    )
+    parser.add_argument(
+        "--db",
+        "--db-profile",
+        action="append",
+        dest="db_profiles",
+        help=(
+            "Database profile name (from config/databases) or path to profile JSON "
+            "(repeatable)."
+        ),
+    )
+    parser.add_argument(
+        "--db-config-dir",
+        help="Override database profile directory (default: config/databases).",
+    )
     return parser.parse_args(argv)
 
 
@@ -131,6 +152,50 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.file_path_mask_mode:
         config.setdefault("output", {})
         config["output"]["file_path_mask_mode"] = args.file_path_mask_mode
+
+    db_profiles = args.db_profiles or []
+    db_enabled_by_cli = bool(args.enable_db or db_profiles)
+    if args.db_config_dir:
+        config.setdefault("sources", {})
+        config["sources"].setdefault("database", {})
+        config["sources"]["database"]["profile_dir"] = args.db_config_dir
+    if db_profiles:
+        config.setdefault("sources", {})
+        config["sources"].setdefault("database", {})
+        config["sources"]["database"]["profiles"] = list(db_profiles)
+    if db_enabled_by_cli:
+        config.setdefault("sources", {})
+        config["sources"].setdefault("database", {})
+        config["sources"]["database"]["enabled"] = True
+        enabled_sources = list(config["sources"].get("enabled_sources", []) or [])
+        if "database" not in enabled_sources:
+            enabled_sources.append("database")
+        config["sources"]["enabled_sources"] = enabled_sources
+
+    try:
+        apply_database_profiles(
+            config,
+            config_path,
+            override_profiles=db_profiles if db_profiles else None,
+            override_profile_dir=args.db_config_dir,
+        )
+        refresh_database_sources(config)
+    except Exception as exc:
+        logger.error("STEP_FAILED: load_database_profiles")
+        print(f"Failed to load database profiles: {exc}", file=sys.stderr)
+        return 1
+
+    if db_enabled_by_cli:
+        database_cfg = (config.get("sources", {}) or {}).get("database", {}) or {}
+        connections = database_cfg.get("connections", []) or []
+        if not connections:
+            logger.error("STEP_FAILED: database_config")
+            print(
+                "Database scanning enabled from CLI but no database configuration was found. "
+                "Provide --db <profile> or configure sources.database.connections.",
+                file=sys.stderr,
+            )
+            return 1
 
     resolved_output_path = resolve_output_path(
         str(config["output"].get("path", "output/output.json"))

@@ -1,0 +1,33 @@
+{
+  "name": "oracle_remote",
+  "description": "Remote Oracle sample.",
+  "labels": ["remote", "oracle"],
+  "database": {
+    "connections": [
+      {
+        "name": "oracle_remote",
+        "enabled": false,
+        "type": "oracle",
+        "url": "oracle://scanner_user:${DPDP_ORACLE_PASSWORD}@oracle-host.example.com:1521/ORCLPDB1",
+        "database": "ORCLPDB1",
+        "include_tables": [
+          "CUSTOMER_PROFILE"
+        ],
+        "auth": {
+          "username": "scanner_user",
+          "password_env": "DPDP_ORACLE_PASSWORD",
+          "keytab_file": "/etc/security/keytabs/oracle_scanner.keytab",
+          "kerberos_principal": "svc-oracle@EXAMPLE.COM"
+        },
+        "piicatcher": {
+          "enabled": true,
+          "source_type": "oracle",
+          "source_name": "oracle_remote",
+          "add_source_function_candidates": [
+            "add_oracle_source"
+          ]
+        }
+      }
+    ]
+  }
+}

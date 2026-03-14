@@ -1,0 +1,36 @@
+{
+  "name": "mysql_local",
+  "description": "Local MySQL sample for dpdp_scanner_sample.",
+  "labels": ["local", "mysql"],
+  "database": {
+    "connections": [
+      {
+        "name": "mysql_local_sample",
+        "enabled": true,
+        "type": "mysql",
+        "url": "mysql://root:${DPDP_MYSQL_PASSWORD}@127.0.0.1:3306/dpdp_scanner_sample",
+        "database": "dpdp_scanner_sample",
+        "include_tables": [
+          "customers",
+          "payments",
+          "employee_profiles"
+        ],
+        "auth": {
+          "username": "root",
+          "password_env": "DPDP_MYSQL_PASSWORD"
+        },
+        "piicatcher": {
+          "enabled": true,
+          "source_type": "mysql",
+          "source_name": "mysql_local_sample",
+          "source_kwargs": {
+            "uri": "127.0.0.1",
+            "port": 3306,
+            "username": "root",
+            "database": "dpdp_scanner_sample"
+          }
+        }
+      }
+    ]
+  }
+}

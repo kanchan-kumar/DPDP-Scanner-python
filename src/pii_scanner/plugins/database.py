@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from contextlib import suppress
 from typing import Any, Dict, Iterator, List, Optional, Set
+from urllib.parse import urlparse, urlunparse
 
 from .base import SourcePlugin, SourceRecord, error_record, skip_record, source_record
 from .piicatcher_adapter import (
@@ -13,12 +14,13 @@ from .piicatcher_adapter import (
 )
 
 try:
-    from sqlalchemy import MetaData, Table, create_engine, select
+    from sqlalchemy import MetaData, Table, create_engine, select, text
 except Exception:  # pragma: no cover - optional dependency guard
     MetaData = None  # type: ignore[assignment]
     Table = None  # type: ignore[assignment]
     create_engine = None  # type: ignore[assignment]
     select = None  # type: ignore[assignment]
+    text = None  # type: ignore[assignment]
 
 
 DEFAULT_SAMPLE_VALUES_CFG: Dict[str, Any] = {
@@ -38,6 +40,12 @@ RELATIONAL_SAMPLE_SOURCE_TYPES = {
     "mssql",
     "oracle",
     "snowflake",
+}
+
+DISCOVERY_SUPPORTED_TYPES = {
+    "mysql",
+    "postgresql",
+    "mssql",
 }
 
 
@@ -181,6 +189,155 @@ def _connection_endpoint(connection_cfg: Dict[str, Any], url: str) -> str:
     if "@" in url_text:
         return url_text.split("@", 1)[1]
     return url_text
+
+
+def _derive_database_from_url(connection_url: str) -> str:
+    parsed = urlparse(connection_url)
+    return _as_str(parsed.path).lstrip("/")
+
+
+def _apply_database_to_url(connection_url: str, database_name: str) -> str:
+    if not database_name:
+        return connection_url
+    parsed = urlparse(connection_url)
+    new_path = f"/{database_name}"
+    return urlunparse(
+        (
+            parsed.scheme,
+            parsed.netloc,
+            new_path,
+            parsed.params,
+            parsed.query,
+            parsed.fragment,
+        )
+    )
+
+
+def _normalize_name_list(value: Any) -> List[str]:
+    return [_as_str(item) for item in _as_str_list(value) if _as_str(item)]
+
+
+def _discovery_url(connection_type: str, connection_url: str, connection_cfg: Dict[str, Any]) -> str:
+    override = _as_str(
+        connection_cfg.get("database_discovery_url")
+        or connection_cfg.get("discovery_url")
+    )
+    if override:
+        return override
+
+    if connection_type == "postgresql":
+        parsed = urlparse(connection_url)
+        if _as_str(parsed.path).strip("/") == "":
+            return _apply_database_to_url(connection_url, "postgres")
+    return connection_url
+
+
+def _discover_databases(
+    *,
+    connection_type: str,
+    connection_url: str,
+    connection_cfg: Dict[str, Any],
+) -> tuple[List[str], Optional[str]]:
+    if create_engine is None:
+        return [], "sqlalchemy is not available for database discovery."
+    if connection_type not in DISCOVERY_SUPPORTED_TYPES:
+        return [], (
+            f"database discovery is not supported for source type '{connection_type}'."
+        )
+
+    discovery_url = _discovery_url(connection_type, connection_url, connection_cfg)
+    engine = None
+    connection = None
+    try:
+        engine = create_engine(discovery_url)
+        connection = engine.connect()
+        if connection_type == "mysql":
+            stmt = text("SHOW DATABASES") if text is not None else "SHOW DATABASES"
+            rows = connection.execute(stmt).fetchall()
+            names = [row[0] for row in rows if row and row[0]]
+        elif connection_type == "postgresql":
+            stmt = (
+                text("SELECT datname FROM pg_database WHERE datistemplate = false")
+                if text is not None
+                else "SELECT datname FROM pg_database WHERE datistemplate = false"
+            )
+            rows = connection.execute(stmt).fetchall()
+            names = [row[0] for row in rows if row and row[0]]
+        elif connection_type == "mssql":
+            stmt = text("SELECT name FROM sys.databases") if text is not None else "SELECT name FROM sys.databases"
+            rows = connection.execute(stmt).fetchall()
+            names = [row[0] for row in rows if row and row[0]]
+        else:
+            names = []
+    except Exception as exc:
+        return [], (
+            "unable to list databases "
+            f"for source type '{connection_type}' ({exc.__class__.__name__})."
+        )
+    finally:
+        if connection is not None:
+            with suppress(Exception):
+                connection.close()
+        if engine is not None:
+            with suppress(Exception):
+                engine.dispose()
+
+    return [_as_str(item) for item in names if _as_str(item)], None
+
+
+def _resolve_database_targets(
+    *,
+    connection_cfg: Dict[str, Any],
+    connection_url: str,
+    connection_type: str,
+    default_include_all_databases: bool,
+    default_exclude_databases: List[str],
+) -> tuple[List[str], Optional[str]]:
+    if connection_type in {"dynamodb"}:
+        return [""], None
+
+    include_databases = _normalize_name_list(
+        connection_cfg.get("include_databases") or connection_cfg.get("databases")
+    )
+    exclude_databases = _normalize_name_list(
+        connection_cfg.get("exclude_databases") or default_exclude_databases
+    )
+
+    if include_databases:
+        targets = include_databases
+    else:
+        database_name = _as_str(
+            connection_cfg.get("database") or _derive_database_from_url(connection_url)
+        )
+        if database_name:
+            targets = [database_name]
+        else:
+            include_all = connection_cfg.get("include_all_databases")
+            if include_all is None:
+                include_all = default_include_all_databases
+            if include_all:
+                targets, error = _discover_databases(
+                    connection_type=connection_type,
+                    connection_url=connection_url,
+                    connection_cfg=connection_cfg,
+                )
+                if error:
+                    return [], error
+            else:
+                return [], (
+                    "No database specified and include_all_databases is false."
+                )
+
+    if exclude_databases:
+        exclude_set = {_normalize_table_name(item) for item in exclude_databases}
+        filtered = []
+        for name in targets:
+            if _normalize_table_name(name) in exclude_set:
+                continue
+            filtered.append(name)
+        targets = filtered
+
+    return targets, None
 
 
 class _ColumnSampleCollector:
@@ -352,6 +509,15 @@ class DatabaseSourcePlugin(SourcePlugin):
         self.output_cfg = output_cfg
         self.connections = database_cfg.get("connections", []) or []
         self.global_piicatcher_cfg = database_cfg.get("piicatcher", {}) or {}
+        self.default_include_all_tables = bool(
+            database_cfg.get("include_all_tables", True)
+        )
+        self.default_include_all_databases = bool(
+            database_cfg.get("include_all_databases", True)
+        )
+        self.default_exclude_databases = _as_str_list(
+            database_cfg.get("exclude_databases", [])
+        )
         self.global_sample_values_cfg = _normalize_sample_values_cfg(
             database_cfg.get("sample_values", {})
         )
@@ -410,171 +576,217 @@ class DatabaseSourcePlugin(SourcePlugin):
                 )
                 continue
 
-            piicatcher_cfg = self._resolve_piicatcher_cfg(connection_cfg)
-            if not bool(piicatcher_cfg.get("enabled", True)):
-                yield skip_record(
-                    plugin_name=self.plugin_name,
-                    source_type=self.source_type,
-                    source_path=f"db://{connection_name}",
-                    reason="piicatcher is disabled for this connection.",
-                )
-                continue
-
-            (
-                columns_by_table,
-                piicatcher_metadata,
-                piicatcher_error,
-            ) = detect_pii_columns_with_piicatcher(
-                connection_name=connection_name,
-                connection_url=url,
-                connection_cfg=connection_cfg,
-                piicatcher_cfg=piicatcher_cfg,
-            )
-            if piicatcher_error:
-                yield error_record(
-                    plugin_name=self.plugin_name,
-                    source_type=self.source_type,
-                    source_path=f"db://{connection_name}",
-                    error_message=piicatcher_error,
-                )
-                continue
-
             include_tables, exclude_tables = _table_selection_sets(connection_cfg)
             connection_type = derive_source_type_from_connection(
                 connection_url=url,
                 connection_cfg=connection_cfg,
             )
-            emitted_records = 0
-            sample_values_cfg = self._resolve_sample_values_cfg(connection_cfg)
-            with _ColumnSampleCollector(
-                connection_url=url,
-                connection_type=connection_type,
-                sample_cfg=sample_values_cfg,
-            ) as sample_collector:
-                for table_key, columns in columns_by_table.items():
-                    schema_name, table_name = _parse_table_key(table_key)
-                    table_token = _normalize_table_name(table_name)
-                    schema_table_token = (
-                        _normalize_table_name(f"{schema_name}.{table_name}")
-                        if schema_name
-                        else table_token
-                    )
-
-                    if include_tables and table_token not in include_tables and schema_table_token not in include_tables:
-                        continue
-                    if table_token in exclude_tables or schema_table_token in exclude_tables:
-                        continue
-
-                    for column_name, pii_types in columns.items():
-                        clean_column = _as_str(column_name)
-                        if not clean_column:
-                            continue
-                        clean_pii_types = [
-                            _as_str(pii_type)
-                            for pii_type in (pii_types or [])
-                            if _as_str(pii_type)
-                        ]
-                        if not clean_pii_types:
-                            clean_pii_types = ["PII"]
-
-                        table_label = f"{schema_name}.{table_name}" if schema_name else table_name
-                        source_path = (
-                            f"db://{connection_name}/table:{table_label}/column:{clean_column}"
-                        )
-                        database_name = _as_str(
-                            connection_cfg.get("database")
-                            or derive_database_name_from_url(url)
-                        )
-                        source_metadata: Dict[str, Any] = {
-                            "connection": connection_name,
-                            "connection_type": connection_type,
-                            "connection_endpoint": _connection_endpoint(connection_cfg, url),
-                            "database": database_name,
-                            "schema": schema_name,
-                            "table": table_name,
-                            "column": clean_column,
-                            "pii_types": clean_pii_types,
-                            "detector": "piicatcher",
-                            "piicatcher_run": {
-                                "source_name": piicatcher_metadata.get("source_name", ""),
-                                "source_type": piicatcher_metadata.get("source_type", ""),
-                                "table_count": piicatcher_metadata.get("table_count", 0),
-                                "pii_column_count": piicatcher_metadata.get("pii_column_count", 0),
-                            },
-                        }
-
-                        if bool(sample_values_cfg.get("enabled", False)):
-                            sample_values, sample_error = sample_collector.sample_values(
-                                schema_name=schema_name,
-                                table_name=table_name,
-                                column_name=clean_column,
-                            )
-                            source_metadata["sample_values"] = sample_values
-                            source_metadata["sample_values_count"] = len(sample_values)
-                            source_metadata["sample_values_limit"] = int(
-                                sample_values_cfg.get("limit_per_column", 5)
-                            )
-                            if sample_values:
-                                source_metadata["sample_value_preview"] = sample_values[0]
-                            if sample_error:
-                                source_metadata["sample_values_error"] = sample_error
-
-                        logical_text = f"{table_label}.{clean_column}"
-                        findings: List[Dict[str, Any]] = []
-                        for pii_type in clean_pii_types:
-                            findings.append(
-                                {
-                                    "entity_type": pii_type,
-                                    "category": "PERSONAL",
-                                    "score": 1.0,
-                                    "text": logical_text,
-                                    "start": 0,
-                                    "end": len(logical_text),
-                                    "file_path": source_path,
-                                    "source_type": self.source_type,
-                                    "source_plugin": self.plugin_name,
-                                    "source_metadata": source_metadata,
-                                    "recognizer_name": "piicatcher",
-                                }
-                            )
-
-                        yield source_record(
-                            plugin_name=self.plugin_name,
-                            source_type=self.source_type,
-                            source_path=source_path,
-                            text="",
-                            content_hash=None,
-                            metadata=_metadata_without_findings(source_metadata),
-                            precomputed_findings=findings,
-                        )
-                        emitted_records += 1
-
-            if emitted_records == 0:
+            include_all_tables = connection_cfg.get("include_all_tables")
+            if include_all_tables is None:
+                include_all_tables = self.default_include_all_tables
+            if not include_tables and not bool(include_all_tables):
                 yield skip_record(
                     plugin_name=self.plugin_name,
                     source_type=self.source_type,
                     source_path=f"db://{connection_name}",
-                    reason="No pii columns detected by piicatcher.",
-                    metadata={
-                        "connection": connection_name,
-                        "database": _as_str(
-                            connection_cfg.get("database")
-                            or derive_database_name_from_url(url)
-                        ),
-                        "detector": "piicatcher",
-                    },
+                    reason="No tables configured and include_all_tables is disabled.",
                 )
+                continue
 
-            if connection_cfg.get("queries"):
+            database_targets, database_error = _resolve_database_targets(
+                connection_cfg=connection_cfg,
+                connection_url=url,
+                connection_type=connection_type,
+                default_include_all_databases=self.default_include_all_databases,
+                default_exclude_databases=self.default_exclude_databases,
+            )
+            if database_error:
+                yield error_record(
+                    plugin_name=self.plugin_name,
+                    source_type=self.source_type,
+                    source_path=f"db://{connection_name}",
+                    error_message=database_error,
+                )
+                continue
+            if not database_targets:
                 yield skip_record(
                     plugin_name=self.plugin_name,
                     source_type=self.source_type,
-                    source_path=f"db://{connection_name}/queries",
-                    reason=(
-                        "piicatcher table scanning is enabled; "
-                        "custom SQL query scanning is not supported in piicatcher-only mode."
-                    ),
+                    source_path=f"db://{connection_name}",
+                    reason="No databases selected for scanning.",
                 )
+                continue
+
+            for database_name in database_targets:
+                effective_connection_cfg = dict(connection_cfg)
+                if database_name:
+                    effective_connection_cfg["database"] = database_name
+
+                effective_name = connection_name
+                if database_name and len(database_targets) > 1:
+                    effective_name = f"{connection_name}:{database_name}"
+
+                piicatcher_cfg = self._resolve_piicatcher_cfg(effective_connection_cfg)
+                if not bool(piicatcher_cfg.get("enabled", True)):
+                    yield skip_record(
+                        plugin_name=self.plugin_name,
+                        source_type=self.source_type,
+                        source_path=f"db://{effective_name}",
+                        reason="piicatcher is disabled for this connection.",
+                    )
+                    continue
+
+                (
+                    columns_by_table,
+                    piicatcher_metadata,
+                    piicatcher_error,
+                ) = detect_pii_columns_with_piicatcher(
+                    connection_name=effective_name,
+                    connection_url=url,
+                    connection_cfg=effective_connection_cfg,
+                    piicatcher_cfg=piicatcher_cfg,
+                )
+                if piicatcher_error:
+                    yield error_record(
+                        plugin_name=self.plugin_name,
+                        source_type=self.source_type,
+                        source_path=f"db://{effective_name}",
+                        error_message=piicatcher_error,
+                    )
+                    continue
+
+                emitted_records = 0
+                sample_values_cfg = self._resolve_sample_values_cfg(effective_connection_cfg)
+                sample_url = _apply_database_to_url(url, database_name)
+                with _ColumnSampleCollector(
+                    connection_url=sample_url,
+                    connection_type=connection_type,
+                    sample_cfg=sample_values_cfg,
+                ) as sample_collector:
+                    for table_key, columns in columns_by_table.items():
+                        schema_name, table_name = _parse_table_key(table_key)
+                        table_token = _normalize_table_name(table_name)
+                        schema_table_token = (
+                            _normalize_table_name(f"{schema_name}.{table_name}")
+                            if schema_name
+                            else table_token
+                        )
+
+                        if include_tables and table_token not in include_tables and schema_table_token not in include_tables:
+                            continue
+                        if table_token in exclude_tables or schema_table_token in exclude_tables:
+                            continue
+
+                        for column_name, pii_types in columns.items():
+                            clean_column = _as_str(column_name)
+                            if not clean_column:
+                                continue
+                            clean_pii_types = [
+                                _as_str(pii_type)
+                                for pii_type in (pii_types or [])
+                                if _as_str(pii_type)
+                            ]
+                            if not clean_pii_types:
+                                clean_pii_types = ["PII"]
+
+                            table_label = f"{schema_name}.{table_name}" if schema_name else table_name
+                            source_path = (
+                                f"db://{effective_name}/table:{table_label}/column:{clean_column}"
+                            )
+                            effective_database = _as_str(
+                                effective_connection_cfg.get("database")
+                                or derive_database_name_from_url(url)
+                            )
+                            source_metadata: Dict[str, Any] = {
+                                "connection": effective_name,
+                                "connection_type": connection_type,
+                                "connection_endpoint": _connection_endpoint(effective_connection_cfg, url),
+                                "database": effective_database,
+                                "schema": schema_name,
+                                "table": table_name,
+                                "column": clean_column,
+                                "pii_types": clean_pii_types,
+                                "detector": "piicatcher",
+                                "piicatcher_run": {
+                                    "source_name": piicatcher_metadata.get("source_name", ""),
+                                    "source_type": piicatcher_metadata.get("source_type", ""),
+                                    "table_count": piicatcher_metadata.get("table_count", 0),
+                                    "pii_column_count": piicatcher_metadata.get("pii_column_count", 0),
+                                },
+                            }
+
+                            if bool(sample_values_cfg.get("enabled", False)):
+                                sample_values, sample_error = sample_collector.sample_values(
+                                    schema_name=schema_name,
+                                    table_name=table_name,
+                                    column_name=clean_column,
+                                )
+                                source_metadata["sample_values"] = sample_values
+                                source_metadata["sample_values_count"] = len(sample_values)
+                                source_metadata["sample_values_limit"] = int(
+                                    sample_values_cfg.get("limit_per_column", 5)
+                                )
+                                if sample_values:
+                                    source_metadata["sample_value_preview"] = sample_values[0]
+                                if sample_error:
+                                    source_metadata["sample_values_error"] = sample_error
+
+                            logical_text = f"{table_label}.{clean_column}"
+                            findings: List[Dict[str, Any]] = []
+                            for pii_type in clean_pii_types:
+                                findings.append(
+                                    {
+                                        "entity_type": pii_type,
+                                        "category": "PERSONAL",
+                                        "score": 1.0,
+                                        "text": logical_text,
+                                        "start": 0,
+                                        "end": len(logical_text),
+                                        "file_path": source_path,
+                                        "source_type": self.source_type,
+                                        "source_plugin": self.plugin_name,
+                                        "source_metadata": source_metadata,
+                                        "recognizer_name": "piicatcher",
+                                    }
+                                )
+
+                            yield source_record(
+                                plugin_name=self.plugin_name,
+                                source_type=self.source_type,
+                                source_path=source_path,
+                                text="",
+                                content_hash=None,
+                                metadata=_metadata_without_findings(source_metadata),
+                                precomputed_findings=findings,
+                            )
+                            emitted_records += 1
+
+                if emitted_records == 0:
+                    yield skip_record(
+                        plugin_name=self.plugin_name,
+                        source_type=self.source_type,
+                        source_path=f"db://{effective_name}",
+                        reason="No pii columns detected by piicatcher.",
+                        metadata={
+                            "connection": effective_name,
+                            "database": _as_str(
+                                effective_connection_cfg.get("database")
+                                or derive_database_name_from_url(url)
+                            ),
+                            "detector": "piicatcher",
+                        },
+                    )
+
+                if effective_connection_cfg.get("queries"):
+                    yield skip_record(
+                        plugin_name=self.plugin_name,
+                        source_type=self.source_type,
+                        source_path=f"db://{effective_name}/queries",
+                        reason=(
+                            "piicatcher table scanning is enabled; "
+                            "custom SQL query scanning is not supported in piicatcher-only mode."
+                        ),
+                    )
 
         if not enabled_connection_found:
             yield skip_record(

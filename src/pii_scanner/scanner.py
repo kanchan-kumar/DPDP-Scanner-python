@@ -204,6 +204,9 @@ def _summarize_source_config(config: Dict[str, Any]) -> Dict[str, Any]:
         "database": {
             "enabled": bool(database_cfg.get("enabled", False)),
             "scanner": "piicatcher",
+            "profile_dir": str(database_cfg.get("profile_dir", "")),
+            "profiles": database_cfg.get("profiles", []),
+            "profiles_resolved": database_cfg.get("profiles_resolved", []),
             "piicatcher": {
                 "enabled": bool(
                     (database_cfg.get("piicatcher", {}) or {}).get("enabled", True)
